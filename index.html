@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Diablo | أدواتك في مكان واحد</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<header>
+    <div class="logo">Diablo</div>
+
+    <p>أدواتك اليومية في مكان واحد 🚀</p>
+
+    <div class="search-box">
+        <input
+            id="searchInput"
+            type="text"
+            placeholder="🔎 ابحث عن أداة..."
+        >
+    </div>
+</header>
+
+<section class="hero-image">
+    <img
+        src="diablo-hero.png"
+        alt="Diablo - أدواتك في مكان واحد"
+    >
+</section>
+
+
+<main class="tools">
+
+    <!-- الحاسبة -->
+    <div class="tool-card">
+        <div class="icon">🧮</div>
+        <h2>الحاسبة</h2>
+        <p>حاسبة كاملة للعمليات الحسابية.</p>
+        <button onclick="openTool('calculator')">
+            استخدم الآن
+        </button>
+    </div>
+
+
+    <!-- النسبة -->
+    <div class="tool-card">
+        <div class="icon">📊</div>
+        <h2>النسبة المئوية</h2>
+        <p>احسب النسب المئوية بسهولة.</p>
+        <button onclick="openTool('percentage')">
+            استخدم الآن
+        </button>
+    </div>
+
+
+    <!-- الخصم -->
+    <div class="tool-card">
+        <div class="icon">💸</div>
+        <h2>حساب الخصم</h2>
+        <p>احسب السعر بعد الخصم.</p>
+        <button onclick="openTool('discount')">
+            استخدم الآن
+        </button>
+    </div>
+
+
+    <!-- الوحدات -->
+    <div class="tool-card">
+        <div class="icon">🔄</div>
+        <h2>تحويل الوحدات</h2>
+        <p>حوّل بين وحدات القياس المختلفة.</p>
+        <button onclick="openTool('units')">
+            استخدم الآن
+        </button>
+    </div>
+
+
+    <!-- الكلمات -->
+    <div class="tool-card">
+        <div class="icon">🔤</div>
+        <h2>عداد الكلمات</h2>
+        <p>احسب الكلمات والحروف والمسافات.</p>
+        <button onclick="openTool('words')">
+            استخدم الآن
+        </button>
+    </div>
+
+
+    <!-- العمر -->
+    <div class="tool-card">
+        <div class="icon">📅</div>
+        <h2>حساب العمر</h2>
+        <p>احسب عمرك بالسنوات والأشهر والأيام.</p>
+        <button onclick="openTool('age')">
+            استخدم الآن
+        </button>
+    </div>
+
+
+    <!-- QR -->
+    <div class="tool-card">
+        <div class="icon">📱</div>
+        <h2>QR Code</h2>
+        <p>أنشئ QR Code لأي رابط أو نص.</p>
+        <button onclick="openTool('qr')">
+            استخدم الآن
+        </button>
+    </div>
+
+
+    <!-- المؤقت -->
+    <div class="tool-card">
+        <div class="icon">⏱️</div>
+        <h2>المؤقت</h2>
+        <p>حدد وقتًا وسيقوم Diablo بالعد التنازلي.</p>
+        <button onclick="openTool('timer')">
+            استخدم الآن
+        </button>
+    </div>
+
+
+    <!-- الفرق بين تاريخين -->
+    <div class="tool-card">
+        <div class="icon">📆</div>
+        <h2>الفرق بين تاريخين</h2>
+        <p>اعرف عدد الأيام بين تاريخين.</p>
+        <button onclick="openTool('dateDifference')">
+            استخدم الآن
+        </button>
+    </div>
+
+
+    <!-- تحويل الأرقام -->
+    <div class="tool-card">
+        <div class="icon">🔢</div>
+        <h2>تحويل الأرقام</h2>
+        <p>حوّل الأرقام بين Decimal و Binary و Hex.</p>
+        <button onclick="openTool('numbers')">
+            استخدم الآن
+        </button>
+    </div>
+
+
+    <!-- تغيير حالة الحروف -->
+    <div class="tool-card">
+        <div class="icon">🔠</div>
+        <h2>تغيير حالة الحروف</h2>
+        <p>حوّل النص الإنجليزي إلى أحرف كبيرة أو صغيرة.</p>
+        <button onclick="openTool('case')">
+            استخدم الآن
+        </button>
+    </div>
+
+
+    <!-- الألوان -->
+    <div class="tool-card">
+        <div class="icon">🎨</div>
+        <h2>مولد الألوان</h2>
+        <p>أنشئ لونًا عشوائيًا واعرف كود HEX.</p>
+        <button onclick="openTool('colors')">
+            استخدم الآن
+        </button>
+    </div>
+
+
+    <!-- تحويل الطول -->
+    <div class="tool-card">
+        <div class="icon">📏</div>
+        <h2>تحويل الطول</h2>
+        <p>حوّل بين المتر والسنتيمتر والكيلومتر.</p>
+        <button onclick="openTool('length')">
+            استخدم الآن
+        </button>
+    </div>
+
+
+    <!-- الفائدة -->
+    <div class="tool-card premium">
+        <div class="icon">💰</div>
+        <h2>الفائدة البسيطة</h2>
+        <p>احسب قيمة الفائدة والمبلغ النهائي.</p>
+        <button onclick="openTool('interest')">
+            استخدم الآن
+        </button>
+    </div>
+
+
+    <!-- تنظيف النص -->
+    <div class="tool-card">
+        <div class="icon">📝</div>
+        <h2>منظّم النص</h2>
+        <p>نظّف النص من المسافات والأسطر الزائدة.</p>
+        <button onclick="openTool('textCleaner')">
+            استخدم الآن
+        </button>
+    </div>
+
+
+    <!-- أدوات متقدمة -->
+    <div class="tool-card premium">
+        <div class="icon">⭐</div>
+        <h2>أدوات متقدمة</h2>
+        <p>مجموعة أدوات إضافية لـ Diablo.</p>
+        <button onclick="openTool('advanced')">
+            استخدم الآن
+        </button>
+    </div>
+
+</main>
+
+
+<!-- النافذة -->
+<div id="toolModal" class="modal">
+
+    <div class="modal-content">
+
+        <button
+            class="close-btn"
+            onclick="closeTool()"
+        >
+            ×
+        </button>
+
+        <div id="toolContent"></div>
+
+    </div>
+
+</div>
+
+
+<footer>
+    <p>© 2026 Diablo — جميع الحقوق محفوظة</p>
+</footer>
+
+
+<script src="script.js"></script>
+
+</body>
+</html>
