@@ -58,6 +58,7 @@
         href="style.css"
     >
 
+
     <!-- =====================================================
          GOOGLE ANALYTICS
     ====================================================== -->
@@ -77,16 +78,17 @@
         }
 
         gtag(
-            'js',
+            "js",
             new Date()
         );
 
         gtag(
-            'config',
-            'G-3KK83SHRX'
+            "config",
+            "G-3KK83SHRX"
         );
 
     </script>
+
 
 </head>
 
@@ -599,7 +601,6 @@
 
         <div class="tool-card">
 
-
             <h3>
                 🧮 حساب النسبة المئوية
             </h3>
@@ -620,9 +621,7 @@
 
 
             <button onclick="calculatePercentage()">
-
                 احسب
-
             </button>
 
 
@@ -631,7 +630,6 @@
                 class="result"
             ></div>
 
-
         </div>
 
 
@@ -639,7 +637,6 @@
         <!-- REQUIRED GRADE -->
 
         <div class="tool-card">
-
 
             <h3>
                 🎯 الدرجة المطلوبة
@@ -668,9 +665,7 @@
 
 
             <button onclick="calculateRequired()">
-
                 احسب
-
             </button>
 
 
@@ -679,7 +674,6 @@
                 class="result"
             ></div>
 
-
         </div>
 
 
@@ -687,7 +681,6 @@
         <!-- TIMER -->
 
         <div class="tool-card">
-
 
             <h3>
                 ⏱️ مؤقت المذاكرة
@@ -702,16 +695,12 @@
 
 
             <button onclick="startTimer()">
-
                 ابدأ
-
             </button>
 
 
             <button onclick="stopTimer()">
-
                 إيقاف
-
             </button>
 
 
@@ -719,11 +708,8 @@
                 id="timer-display"
                 class="timer"
             >
-
                 00:00
-
             </div>
-
 
         </div>
 
@@ -732,7 +718,6 @@
         <!-- EXAM COUNTDOWN -->
 
         <div class="tool-card">
-
 
             <h3>
                 📅 عداد الامتحان
@@ -746,9 +731,7 @@
 
 
             <button onclick="examCountdown()">
-
                 احسب
-
             </button>
 
 
@@ -757,7 +740,6 @@
                 class="result"
             ></div>
 
-
         </div>
 
 
@@ -765,7 +747,6 @@
         <!-- AGE -->
 
         <div class="tool-card">
-
 
             <h3>
                 🎂 حساب العمر
@@ -779,9 +760,7 @@
 
 
             <button onclick="calculateAge()">
-
                 احسب
-
             </button>
 
 
@@ -790,7 +769,6 @@
                 class="result"
             ></div>
 
-
         </div>
 
 
@@ -798,7 +776,6 @@
         <!-- DATE DIFFERENCE -->
 
         <div class="tool-card">
-
 
             <h3>
                 📆 الفرق بين تاريخين
@@ -818,9 +795,7 @@
 
 
             <button onclick="dateDifference()">
-
                 احسب
-
             </button>
 
 
@@ -829,7 +804,6 @@
                 class="result"
             ></div>
 
-
         </div>
 
 
@@ -837,7 +811,6 @@
         <!-- CALCULATOR -->
 
         <div class="tool-card">
-
 
             <h3>
                 🔢 آلة حاسبة
@@ -852,9 +825,7 @@
 
 
             <button onclick="calculate()">
-
                 احسب
-
             </button>
 
 
@@ -863,7 +834,6 @@
                 class="result"
             ></div>
 
-
         </div>
 
 
@@ -871,7 +841,6 @@
         <!-- UNIT CONVERTER -->
 
         <div class="tool-card">
-
 
             <h3>
                 🔄 تحويل الوحدات
@@ -887,34 +856,27 @@
 
             <select id="unit-type">
 
-
                 <option value="km-m">
                     كيلومتر → متر
                 </option>
-
 
                 <option value="m-km">
                     متر → كيلومتر
                 </option>
 
-
                 <option value="kg-g">
                     كيلوجرام → جرام
                 </option>
-
 
                 <option value="g-kg">
                     جرام → كيلوجرام
                 </option>
 
-
             </select>
 
 
             <button onclick="convertUnit()">
-
                 تحويل
-
             </button>
 
 
@@ -923,7 +885,6 @@
                 class="result"
             ></div>
 
-
         </div>
 
 
@@ -931,7 +892,6 @@
         <!-- SUMMARIZER -->
 
         <div class="tool-card featured-tool">
-
 
             <h3>
                 📝 تلخيص الدروس
@@ -944,22 +904,16 @@
 
 
             <button onclick="openSummarizer()">
-
                 افتح أداة التلخيص
-
             </button>
-
 
         </div>
 
 
 
-        <!-- =====================================================
-             NEW TRANSLATOR TOOL
-        ====================================================== -->
+        <!-- TRANSLATOR -->
 
         <div class="tool-card featured-tool">
-
 
             <h3>
                 🌐 مترجم DIABLO
@@ -979,49 +933,39 @@
 
             <select id="translator-language">
 
-
                 <option value="en">
                     🇬🇧 الإنجليزية
                 </option>
-
 
                 <option value="fr">
                     🇫🇷 الفرنسية
                 </option>
 
-
                 <option value="de">
                     🇩🇪 الألمانية
                 </option>
-
 
                 <option value="es">
                     🇪🇸 الإسبانية
                 </option>
 
-
                 <option value="it">
                     🇮🇹 الإيطالية
                 </option>
-
 
                 <option value="tr">
                     🇹🇷 التركية
                 </option>
 
-
                 <option value="ar">
                     🇪🇬 العربية
                 </option>
-
 
             </select>
 
 
             <button onclick="translateText()">
-
                 🌐 ترجمة
-
             </button>
 
 
@@ -1030,17 +974,13 @@
                 class="result"
             ></div>
 
-
         </div>
 
 
 
-        <!-- =====================================================
-             NEW QR CODE TOOL
-        ====================================================== -->
+        <!-- QR CODE -->
 
         <div class="tool-card featured-tool">
-
 
             <h3>
                 📱 مولّد QR Code
@@ -1060,9 +1000,7 @@
 
 
             <button onclick="generateQRCode()">
-
                 📱 إنشاء QR Code
-
             </button>
 
 
@@ -1070,7 +1008,6 @@
                 id="qr-result"
                 class="qr-result"
             ></div>
-
 
         </div>
 
@@ -1113,9 +1050,7 @@
                 class="main-btn"
                 onclick="openAI()"
             >
-
                 ابدأ مع Diablo AI
-
             </button>
 
 
@@ -1123,9 +1058,7 @@
                 class="secondary-btn"
                 onclick="openSummarizer()"
             >
-
                 📝 لخص درس
-
             </button>
 
 
@@ -1185,9 +1118,7 @@
             class="close-btn"
             onclick="closeAI()"
         >
-
             ×
-
         </button>
 
 
@@ -1216,9 +1147,7 @@
             onclick="askAI()"
             class="main-btn"
         >
-
             اسأل Diablo AI 🚀
-
         </button>
 
 
@@ -1254,9 +1183,7 @@
             class="close-btn"
             onclick="closeSummarizer()"
         >
-
             ×
-
         </button>
 
 
@@ -1283,9 +1210,7 @@
                 class="summary-tab active"
                 onclick="switchSummaryMode('text', this)"
             >
-
                 📝 نص
-
             </button>
 
 
@@ -1293,9 +1218,7 @@
                 class="summary-tab"
                 onclick="switchSummaryMode('voice', this)"
             >
-
                 🎙️ تسجيل
-
             </button>
 
 
@@ -1319,9 +1242,7 @@
                 class="main-btn"
                 onclick="summarizeText()"
             >
-
                 ✨ لخص الدرس
-
             </button>
 
 
@@ -1339,9 +1260,7 @@
                 class="voice-status"
                 id="voice-status"
             >
-
                 اضغط بدء التسجيل وابدأ شرح الدرس.
-
             </p>
 
 
@@ -1354,9 +1273,7 @@
                     id="start-recording-btn"
                     onclick="startRecording()"
                 >
-
                     🎙️ بدء التسجيل
-
                 </button>
 
 
@@ -1366,9 +1283,7 @@
                     onclick="stopRecording()"
                     disabled
                 >
-
                     ⏹️ إيقاف
-
                 </button>
 
 
@@ -1380,9 +1295,7 @@
                 class="recording-time"
                 id="recording-time"
             >
-
                 00:00
-
             </div>
 
 
@@ -1409,18 +1322,14 @@
                 class="main-btn"
                 onclick="summarizeVoiceTranscript()"
             >
-
                 ✨ لخص التسجيل
-
             </button>
 
 
 
             <small class="browser-note">
-
                 التسجيل الصوتي يعتمد على دعم المتصفح للتعرف على الكلام.
                 لو التعرف غير متاح، اكتب أو الصق التفريغ النصي يدويًا.
-
             </small>
 
 
@@ -1443,6 +1352,7 @@
 
 <!-- =========================================================
      QR CODE LIBRARY
+     يجب تحميل المكتبة قبل script.js
 ========================================================= -->
 
 <script
