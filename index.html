@@ -58,685 +58,1406 @@
         href="style.css"
     >
 
-    <!-- Google Analytics -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-3KK83SHRX"></script>
+    <!-- =====================================================
+         GOOGLE ANALYTICS
+    ====================================================== -->
+
+    <script
+        async
+        src="https://www.googletagmanager.com/gtag/js?id=G-3KK83SHRX"
+    ></script>
 
     <script>
-        window.dataLayer = window.dataLayer || [];
+
+        window.dataLayer =
+            window.dataLayer || [];
 
         function gtag() {
             dataLayer.push(arguments);
         }
 
-        gtag('js', new Date());
+        gtag(
+            'js',
+            new Date()
+        );
 
-        gtag('config', 'G-3KK83SHRX');
+        gtag(
+            'config',
+            'G-3KK83SHRX'
+        );
+
     </script>
 
 </head>
 
-</head><body><header><div class="logo">
-    ⚡ DIABLO
-</div>
 
-<nav>
-    <a href="#home">الرئيسية</a>
-    <a href="#stages">المراحل</a>
-    <a href="#books">الكتب</a>
-    <a href="#tools">الأدوات</a>
+<body>
 
-    <button onclick="openAI()">
-        🤖 Diablo AI
-    </button>
 
-    <button onclick="openSummarizer()">
-        📝 ملخص الدروس
-    </button>
-</nav>
+<!-- =========================================================
+     HEADER
+========================================================= -->
 
-</header><main><section id="home" class="hero"><div class="hero-text">
+<header>
 
-    <span>🚀 منصة تعليمية ذكية</span>
+    <div class="logo">
+        ⚡ DIABLO
+    </div>
 
-    <h1>
-        اتعلم أسرع مع
-        <strong>DIABLO</strong>
-    </h1>
 
-    <p>
-        الكتب الرسمية والأدوات التعليمية والذكاء الاصطناعي
-        في مكان واحد.
-    </p>
+    <nav>
 
-    <div class="hero-buttons">
-
-        <a href="#books" class="main-btn">
-            افتح الكتب 📚
+        <a href="#home">
+            الرئيسية
         </a>
 
-        <button class="secondary-btn" onclick="openAI()">
-            اسأل Diablo AI 🤖
+        <a href="#stages">
+            المراحل
+        </a>
+
+        <a href="#books">
+            الكتب
+        </a>
+
+        <a href="#tools">
+            الأدوات
+        </a>
+
+
+        <button onclick="openAI()">
+            🤖 Diablo AI
         </button>
 
-        <button class="secondary-btn" onclick="openSummarizer()">
-            لخص درس 📝
+
+        <button onclick="openSummarizer()">
+            📝 ملخص الدروس
         </button>
 
-    </div>
+    </nav>
 
-</div>
+</header>
 
-<img
-    src="diablo-hero.png"
-    alt="Diablo"
-    class="hero-image"
+
+
+<!-- =========================================================
+     MAIN
+========================================================= -->
+
+<main>
+
+
+<!-- =========================================================
+     HOME
+========================================================= -->
+
+<section
+    id="home"
+    class="hero"
 >
 
-</section><!-- =========================
-     STAGES
-     ========================= --><section id="stages" class="section"><div class="section-title">
+    <div class="hero-text">
 
-    <span>📚 اختر مرحلتك</span>
-
-    <h2>
-        التعليم حسب المرحلة
-    </h2>
-
-    <p>
-        اختار مرحلتك وشوف الأدوات المناسبة ليك.
-    </p>
-
-</div>
+        <span>
+            🚀 منصة تعليمية ذكية
+        </span>
 
 
-<div class="stage-grid">
+        <h1>
 
-    <div class="stage-card secondary"
-         onclick="openStage('secondary')">
+            اتعلم أسرع مع
 
-        <div class="stage-icon">🎓</div>
+            <strong>
+                DIABLO
+            </strong>
 
-        <h3>الثانوي</h3>
+        </h1>
+
 
         <p>
-            أدوات ومساعدات للمرحلة الثانوية
+
+            الكتب الرسمية والأدوات التعليمية والذكاء الاصطناعي
+            في مكان واحد.
+
         </p>
 
-        <span>افتح القسم ←</span>
 
-    </div>
+        <div class="hero-buttons">
 
 
-    <div class="stage-card preparatory"
-         onclick="openStage('preparatory')">
+            <a
+                href="#books"
+                class="main-btn"
+            >
 
-        <div class="stage-icon">📚</div>
+                افتح الكتب 📚
 
-        <h3>الإعدادي</h3>
+            </a>
 
-        <p>
-            مذاكرة وحسابات وأدوات للإعدادي
-        </p>
 
-        <span>افتح القسم ←</span>
+            <button
+                class="secondary-btn"
+                onclick="openAI()"
+            >
 
-    </div>
+                اسأل Diablo AI 🤖
 
+            </button>
 
-    <div class="stage-card primary"
-         onclick="openStage('primary')">
 
-        <div class="stage-icon">📖</div>
+            <button
+                class="secondary-btn"
+                onclick="openSummarizer()"
+            >
 
-        <h3>الابتدائي</h3>
+                لخص درس 📝
 
-        <p>
-            تعلم بسيط وممتع للأطفال
-        </p>
+            </button>
 
-        <span>افتح القسم ←</span>
 
-    </div>
-
-
-    <div class="stage-card kindergarten"
-         onclick="openStage('kindergarten')">
-
-        <div class="stage-icon">🧸</div>
-
-        <h3>الحضانة</h3>
-
-        <p>
-            حروف وأرقام وأشكال وألوان
-        </p>
-
-        <span>افتح القسم ←</span>
-
-    </div>
-
-</div>
-
-</section><!-- =========================
-     STAGE CONTENT
-     ========================= --><section id="stage-content" class="section hidden"><button class="back-btn" onclick="closeStage()">
-    ← رجوع للمراحل
-</button>
-
-<div class="content-box">
-
-    <div id="stage-icon"></div>
-
-    <h2 id="stage-title"></h2>
-
-    <p id="stage-description"></p>
-
-    <div id="stage-tools" class="mini-grid"></div>
-
-
-    <div id="stage-tool-panel"
-         class="stage-tool-panel hidden">
-
-        <button class="back-btn"
-                onclick="closeStageTool()">
-            ← رجوع لأدوات المرحلة
-        </button>
-
-        <div id="stage-tool-content"></div>
-
-    </div>
-
-</div>
-
-</section><!-- =========================
-     BOOKS
-     ========================= --><section id="books" class="section"><div class="section-title">
-
-    <span>📚 الكتب الرسمية</span>
-
-    <h2>
-        مكتبة Diablo
-    </h2>
-
-    <p>
-        اختار المرحلة والصف والمادة، وبعدها افتح مكتبة الكتب الرسمية مباشرة.
-    </p>
-
-</div>
-
-
-<div class="book-box">
-
-    <select id="book-stage"
-            onchange="updateBookGrades()">
-
-        <option value="">
-            🎓 اختر المرحلة
-        </option>
-
-        <option value="secondary">
-            الثانوية
-        </option>
-
-        <option value="preparatory">
-            الإعدادية
-        </option>
-
-        <option value="primary">
-            الابتدائية
-        </option>
-
-        <option value="kindergarten">
-            الحضانة
-        </option>
-
-    </select>
-
-
-    <select id="book-grade"
-            onchange="updateBookSubjects()">
-
-        <option value="">
-            📚 اختر الصف
-        </option>
-
-    </select>
-
-
-    <select id="book-subject">
-
-        <option value="">
-            📖 اختر المادة
-        </option>
-
-    </select>
-
-
-    <button onclick="showBooks()"
-            class="book-main-btn">
-
-        🔎 فتح كتاب المادة
-
-    </button>
-
-
-    <div id="books-result"
-         class="books-result">
-    </div>
-
-</div>
-
-</section><!-- =========================
-     USEFUL TOOLS
-     ========================= --><section id="tools" class="section"><div class="section-title">
-
-    <span>🛠️ Useful Tools</span>
-
-    <h2>
-        أدوات مفيدة
-    </h2>
-
-    <p>
-        أدوات بسيطة تساعدك في الدراسة والحياة اليومية.
-    </p>
-
-</div>
-
-
-<div class="tools-grid">
-
-
-    <div class="tool-card">
-
-        <h3>🧮 حساب النسبة المئوية</h3>
-
-        <input id="percent-total"
-               type="number"
-               placeholder="الدرجة الكلية">
-
-        <input id="percent-score"
-               type="number"
-               placeholder="درجتك">
-
-        <button onclick="calculatePercentage()">
-            احسب
-        </button>
-
-        <div id="percentage-result"
-             class="result"></div>
-
-    </div>
-
-
-    <div class="tool-card">
-
-        <h3>🎯 الدرجة المطلوبة</h3>
-
-        <input id="required-total"
-               type="number"
-               placeholder="الدرجة الكلية">
-
-        <input id="required-current"
-               type="number"
-               placeholder="درجتك الحالية">
-
-        <input id="required-percent"
-               type="number"
-               placeholder="النسبة المطلوبة %">
-
-        <button onclick="calculateRequired()">
-            احسب
-        </button>
-
-        <div id="required-result"
-             class="result"></div>
-
-    </div>
-
-
-    <div class="tool-card">
-
-        <h3>⏱️ مؤقت المذاكرة</h3>
-
-        <input id="timer-minutes"
-               type="number"
-               placeholder="عدد الدقائق">
-
-        <button onclick="startTimer()">
-            ابدأ
-        </button>
-
-        <button onclick="stopTimer()">
-            إيقاف
-        </button>
-
-        <div id="timer-display"
-             class="timer">
-            00:00
         </div>
 
     </div>
 
 
-    <div class="tool-card">
+    <img
+        src="diablo-hero.png"
+        alt="Diablo"
+        class="hero-image"
+    >
 
-        <h3>📅 عداد الامتحان</h3>
-
-        <input id="exam-date"
-               type="date">
-
-        <button onclick="examCountdown()">
-            احسب
-        </button>
-
-        <div id="exam-result"
-             class="result"></div>
-
-    </div>
+</section>
 
 
-    <div class="tool-card">
 
-        <h3>🎂 حساب العمر</h3>
+<!-- =========================================================
+     STAGES
+========================================================= -->
 
-        <input id="birth-date"
-               type="date">
+<section
+    id="stages"
+    class="section"
+>
 
-        <button onclick="calculateAge()">
-            احسب
-        </button>
+    <div class="section-title">
 
-        <div id="age-result"
-             class="result"></div>
-
-    </div>
+        <span>
+            📚 اختر مرحلتك
+        </span>
 
 
-    <div class="tool-card">
+        <h2>
+            التعليم حسب المرحلة
+        </h2>
 
-        <h3>📆 الفرق بين تاريخين</h3>
 
-        <input id="date-one"
-               type="date">
-
-        <input id="date-two"
-               type="date">
-
-        <button onclick="dateDifference()">
-            احسب
-        </button>
-
-        <div id="date-result"
-             class="result"></div>
+        <p>
+            اختار مرحلتك وشوف الأدوات المناسبة ليك.
+        </p>
 
     </div>
 
 
-    <div class="tool-card">
 
-        <h3>🔢 آلة حاسبة</h3>
+    <div class="stage-grid">
 
-        <input id="calculator-input"
-               type="text"
-               placeholder="مثال: 25 + 15">
 
-        <button onclick="calculate()">
-            احسب
-        </button>
+        <div
+            class="stage-card secondary"
+            onclick="openStage('secondary')"
+        >
 
-        <div id="calculator-result"
-             class="result"></div>
+            <div class="stage-icon">
+                🎓
+            </div>
+
+
+            <h3>
+                الثانوي
+            </h3>
+
+
+            <p>
+                أدوات ومساعدات للمرحلة الثانوية
+            </p>
+
+
+            <span>
+                افتح القسم ←
+            </span>
+
+        </div>
+
+
+
+        <div
+            class="stage-card preparatory"
+            onclick="openStage('preparatory')"
+        >
+
+            <div class="stage-icon">
+                📚
+            </div>
+
+
+            <h3>
+                الإعدادي
+            </h3>
+
+
+            <p>
+                مذاكرة وحسابات وأدوات للإعدادي
+            </p>
+
+
+            <span>
+                افتح القسم ←
+            </span>
+
+        </div>
+
+
+
+        <div
+            class="stage-card primary"
+            onclick="openStage('primary')"
+        >
+
+            <div class="stage-icon">
+                📖
+            </div>
+
+
+            <h3>
+                الابتدائي
+            </h3>
+
+
+            <p>
+                تعلم بسيط وممتع للأطفال
+            </p>
+
+
+            <span>
+                افتح القسم ←
+            </span>
+
+        </div>
+
+
+
+        <div
+            class="stage-card kindergarten"
+            onclick="openStage('kindergarten')"
+        >
+
+            <div class="stage-icon">
+                🧸
+            </div>
+
+
+            <h3>
+                الحضانة
+            </h3>
+
+
+            <p>
+                حروف وأرقام وأشكال وألوان
+            </p>
+
+
+            <span>
+                افتح القسم ←
+            </span>
+
+        </div>
+
+
+    </div>
+
+</section>
+
+
+
+<!-- =========================================================
+     STAGE CONTENT
+========================================================= -->
+
+<section
+    id="stage-content"
+    class="section hidden"
+>
+
+
+    <button
+        class="back-btn"
+        onclick="closeStage()"
+    >
+
+        ← رجوع للمراحل
+
+    </button>
+
+
+    <div class="content-box">
+
+
+        <div id="stage-icon"></div>
+
+
+        <h2 id="stage-title"></h2>
+
+
+        <p id="stage-description"></p>
+
+
+        <div
+            id="stage-tools"
+            class="mini-grid"
+        ></div>
+
+
+
+        <div
+            id="stage-tool-panel"
+            class="stage-tool-panel hidden"
+        >
+
+
+            <button
+                class="back-btn"
+                onclick="closeStageTool()"
+            >
+
+                ← رجوع لأدوات المرحلة
+
+            </button>
+
+
+            <div id="stage-tool-content"></div>
+
+
+        </div>
+
+
+    </div>
+
+</section>
+
+
+
+<!-- =========================================================
+     BOOKS
+========================================================= -->
+
+<section
+    id="books"
+    class="section"
+>
+
+
+    <div class="section-title">
+
+
+        <span>
+            📚 الكتب الرسمية
+        </span>
+
+
+        <h2>
+            مكتبة Diablo
+        </h2>
+
+
+        <p>
+            اختار المرحلة والصف والمادة، وبعدها افتح مكتبة الكتب الرسمية مباشرة.
+        </p>
+
 
     </div>
 
 
-    <div class="tool-card">
 
-        <h3>🔄 تحويل الوحدات</h3>
+    <div class="book-box">
 
-        <input id="unit-value"
-               type="number"
-               placeholder="القيمة">
 
-        <select id="unit-type">
+        <select
+            id="book-stage"
+            onchange="updateBookGrades()"
+        >
 
-            <option value="km-m">
-                كيلومتر → متر
+            <option value="">
+                🎓 اختر المرحلة
             </option>
 
-            <option value="m-km">
-                متر → كيلومتر
+
+            <option value="secondary">
+                الثانوية
             </option>
 
-            <option value="kg-g">
-                كيلوجرام → جرام
+
+            <option value="preparatory">
+                الإعدادية
             </option>
 
-            <option value="g-kg">
-                جرام → كيلوجرام
+
+            <option value="primary">
+                الابتدائية
+            </option>
+
+
+            <option value="kindergarten">
+                الحضانة
             </option>
 
         </select>
 
-        <button onclick="convertUnit()">
-            تحويل
+
+
+        <select
+            id="book-grade"
+            onchange="updateBookSubjects()"
+        >
+
+            <option value="">
+                📚 اختر الصف
+            </option>
+
+        </select>
+
+
+
+        <select id="book-subject">
+
+            <option value="">
+                📖 اختر المادة
+            </option>
+
+        </select>
+
+
+
+        <button
+            onclick="showBooks()"
+            class="book-main-btn"
+        >
+
+            🔎 فتح كتاب المادة
+
         </button>
 
-        <div id="unit-result"
-             class="result"></div>
+
+
+        <div
+            id="books-result"
+            class="books-result"
+        ></div>
+
 
     </div>
 
+</section>
 
-    <!-- NEW SUMMARIZER CARD -->
 
-    <div class="tool-card featured-tool">
 
-        <h3>
-            📝 تلخيص الدروس
-        </h3>
+<!-- =========================================================
+     USEFUL TOOLS
+========================================================= -->
+
+<section
+    id="tools"
+    class="section"
+>
+
+
+    <div class="section-title">
+
+
+        <span>
+            🛠️ Useful Tools
+        </span>
+
+
+        <h2>
+            أدوات مفيدة
+        </h2>
+
 
         <p>
-            لخص درس مكتوب أو تسجيل صوتي باستخدام Diablo AI.
+            أدوات بسيطة تساعدك في الدراسة والحياة اليومية.
         </p>
 
-        <button onclick="openSummarizer()">
-            افتح أداة التلخيص
-        </button>
-
-    </div>
-
-</div>
-
-</section><!-- =========================
-     AI SECTION
-     ========================= --><section class="ai-section"><div class="ai-content">
-
-    <span>🤖 DIABLO AI</span>
-
-    <h2>
-        مساعدك الذكي في المذاكرة
-    </h2>
-
-    <p>
-        اسأل، افهم، راجع، ولخص دروسك بسهولة.
-    </p>
-
-    <div class="ai-actions">
-
-        <button class="main-btn"
-                onclick="openAI()">
-            ابدأ مع Diablo AI
-        </button>
-
-        <button class="secondary-btn"
-                onclick="openSummarizer()">
-            📝 لخص درس
-        </button>
-
-    </div>
-
-</div>
-
-</section></main><footer><div class="logo">
-    ⚡ DIABLO
-</div>
-
-<p>
-    منصة تعليمية للطلاب 🚀
-</p>
-
-<p>
-    © 2026 Diablo
-</p>
-
-</footer><!-- =========================
-     AI MODAL
-     ========================= --><div id="ai-modal"
-     class="modal"><div class="modal-content">
-
-    <button class="close-btn"
-            onclick="closeAI()">
-        ×
-    </button>
-
-    <div class="ai-icon">
-        🤖
-    </div>
-
-    <h2>
-        Diablo AI
-    </h2>
-
-    <p>
-        اكتب سؤالك الدراسي هنا.
-    </p>
-
-    <textarea id="ai-question"
-              placeholder="مثال: اشرح لي قانون في الرياضيات..."></textarea>
-
-    <button onclick="askAI()"
-            class="main-btn">
-        اسأل Diablo AI 🚀
-    </button>
-
-    <div id="ai-answer"
-         class="ai-answer"></div>
-
-</div>
-
-</div><!-- =========================
-     SUMMARIZER MODAL
-     ========================= --><div id="summarizer-modal"
-     class="modal"><div class="modal-content summarizer-modal">
-
-    <button class="close-btn"
-            onclick="closeSummarizer()">
-        ×
-    </button>
-
-    <div class="ai-icon">
-        📝
-    </div>
-
-    <h2>
-        ملخص الدروس
-    </h2>
-
-    <p>
-        الصق محتوى الدرس أو سجل شرحك، وبعدها خلي Diablo AI يلخصه.
-    </p>
-
-
-    <div class="summary-tabs">
-
-        <button class="summary-tab active"
-                onclick="switchSummaryMode('text', this)">
-            📝 نص
-        </button>
-
-        <button class="summary-tab"
-                onclick="switchSummaryMode('voice', this)">
-            🎙️ تسجيل
-        </button>
 
     </div>
 
 
-    <div id="summary-text-mode"
-         class="summary-mode">
 
-        <textarea id="summary-text"
-                  placeholder="الصق نص الدرس هنا..."></textarea>
-
-        <button class="main-btn"
-                onclick="summarizeText()">
-            ✨ لخص الدرس
-        </button>
-
-    </div>
+    <div class="tools-grid">
 
 
-    <div id="summary-voice-mode"
-         class="summary-mode hidden">
 
-        <p class="voice-status"
-           id="voice-status">
-            اضغط بدء التسجيل وابدأ شرح الدرس.
-        </p>
+        <!-- PERCENTAGE -->
 
-        <div class="recording-controls">
+        <div class="tool-card">
 
-            <button class="main-btn"
-                    id="start-recording-btn"
-                    onclick="startRecording()">
-                🎙️ بدء التسجيل
+
+            <h3>
+                🧮 حساب النسبة المئوية
+            </h3>
+
+
+            <input
+                id="percent-total"
+                type="number"
+                placeholder="الدرجة الكلية"
+            >
+
+
+            <input
+                id="percent-score"
+                type="number"
+                placeholder="درجتك"
+            >
+
+
+            <button onclick="calculatePercentage()">
+
+                احسب
+
             </button>
 
-            <button class="secondary-btn"
+
+            <div
+                id="percentage-result"
+                class="result"
+            ></div>
+
+
+        </div>
+
+
+
+        <!-- REQUIRED GRADE -->
+
+        <div class="tool-card">
+
+
+            <h3>
+                🎯 الدرجة المطلوبة
+            </h3>
+
+
+            <input
+                id="required-total"
+                type="number"
+                placeholder="الدرجة الكلية"
+            >
+
+
+            <input
+                id="required-current"
+                type="number"
+                placeholder="درجتك الحالية"
+            >
+
+
+            <input
+                id="required-percent"
+                type="number"
+                placeholder="النسبة المطلوبة %"
+            >
+
+
+            <button onclick="calculateRequired()">
+
+                احسب
+
+            </button>
+
+
+            <div
+                id="required-result"
+                class="result"
+            ></div>
+
+
+        </div>
+
+
+
+        <!-- TIMER -->
+
+        <div class="tool-card">
+
+
+            <h3>
+                ⏱️ مؤقت المذاكرة
+            </h3>
+
+
+            <input
+                id="timer-minutes"
+                type="number"
+                placeholder="عدد الدقائق"
+            >
+
+
+            <button onclick="startTimer()">
+
+                ابدأ
+
+            </button>
+
+
+            <button onclick="stopTimer()">
+
+                إيقاف
+
+            </button>
+
+
+            <div
+                id="timer-display"
+                class="timer"
+            >
+
+                00:00
+
+            </div>
+
+
+        </div>
+
+
+
+        <!-- EXAM COUNTDOWN -->
+
+        <div class="tool-card">
+
+
+            <h3>
+                📅 عداد الامتحان
+            </h3>
+
+
+            <input
+                id="exam-date"
+                type="date"
+            >
+
+
+            <button onclick="examCountdown()">
+
+                احسب
+
+            </button>
+
+
+            <div
+                id="exam-result"
+                class="result"
+            ></div>
+
+
+        </div>
+
+
+
+        <!-- AGE -->
+
+        <div class="tool-card">
+
+
+            <h3>
+                🎂 حساب العمر
+            </h3>
+
+
+            <input
+                id="birth-date"
+                type="date"
+            >
+
+
+            <button onclick="calculateAge()">
+
+                احسب
+
+            </button>
+
+
+            <div
+                id="age-result"
+                class="result"
+            ></div>
+
+
+        </div>
+
+
+
+        <!-- DATE DIFFERENCE -->
+
+        <div class="tool-card">
+
+
+            <h3>
+                📆 الفرق بين تاريخين
+            </h3>
+
+
+            <input
+                id="date-one"
+                type="date"
+            >
+
+
+            <input
+                id="date-two"
+                type="date"
+            >
+
+
+            <button onclick="dateDifference()">
+
+                احسب
+
+            </button>
+
+
+            <div
+                id="date-result"
+                class="result"
+            ></div>
+
+
+        </div>
+
+
+
+        <!-- CALCULATOR -->
+
+        <div class="tool-card">
+
+
+            <h3>
+                🔢 آلة حاسبة
+            </h3>
+
+
+            <input
+                id="calculator-input"
+                type="text"
+                placeholder="مثال: 25 + 15"
+            >
+
+
+            <button onclick="calculate()">
+
+                احسب
+
+            </button>
+
+
+            <div
+                id="calculator-result"
+                class="result"
+            ></div>
+
+
+        </div>
+
+
+
+        <!-- UNIT CONVERTER -->
+
+        <div class="tool-card">
+
+
+            <h3>
+                🔄 تحويل الوحدات
+            </h3>
+
+
+            <input
+                id="unit-value"
+                type="number"
+                placeholder="القيمة"
+            >
+
+
+            <select id="unit-type">
+
+
+                <option value="km-m">
+                    كيلومتر → متر
+                </option>
+
+
+                <option value="m-km">
+                    متر → كيلومتر
+                </option>
+
+
+                <option value="kg-g">
+                    كيلوجرام → جرام
+                </option>
+
+
+                <option value="g-kg">
+                    جرام → كيلوجرام
+                </option>
+
+
+            </select>
+
+
+            <button onclick="convertUnit()">
+
+                تحويل
+
+            </button>
+
+
+            <div
+                id="unit-result"
+                class="result"
+            ></div>
+
+
+        </div>
+
+
+
+        <!-- SUMMARIZER -->
+
+        <div class="tool-card featured-tool">
+
+
+            <h3>
+                📝 تلخيص الدروس
+            </h3>
+
+
+            <p>
+                لخص درس مكتوب أو تسجيل صوتي باستخدام Diablo AI.
+            </p>
+
+
+            <button onclick="openSummarizer()">
+
+                افتح أداة التلخيص
+
+            </button>
+
+
+        </div>
+
+
+
+        <!-- =====================================================
+             NEW TRANSLATOR TOOL
+        ====================================================== -->
+
+        <div class="tool-card featured-tool">
+
+
+            <h3>
+                🌐 مترجم DIABLO
+            </h3>
+
+
+            <p>
+                ترجم النصوص بسرعة إلى عدة لغات.
+            </p>
+
+
+            <textarea
+                id="translator-input"
+                placeholder="اكتب النص الذي تريد ترجمته..."
+            ></textarea>
+
+
+            <select id="translator-language">
+
+
+                <option value="en">
+                    🇬🇧 الإنجليزية
+                </option>
+
+
+                <option value="fr">
+                    🇫🇷 الفرنسية
+                </option>
+
+
+                <option value="de">
+                    🇩🇪 الألمانية
+                </option>
+
+
+                <option value="es">
+                    🇪🇸 الإسبانية
+                </option>
+
+
+                <option value="it">
+                    🇮🇹 الإيطالية
+                </option>
+
+
+                <option value="tr">
+                    🇹🇷 التركية
+                </option>
+
+
+                <option value="ar">
+                    🇪🇬 العربية
+                </option>
+
+
+            </select>
+
+
+            <button onclick="translateText()">
+
+                🌐 ترجمة
+
+            </button>
+
+
+            <div
+                id="translator-result"
+                class="result"
+            ></div>
+
+
+        </div>
+
+
+
+        <!-- =====================================================
+             NEW QR CODE TOOL
+        ====================================================== -->
+
+        <div class="tool-card featured-tool">
+
+
+            <h3>
+                📱 مولّد QR Code
+            </h3>
+
+
+            <p>
+                حوّل أي رابط أو نص إلى QR Code.
+            </p>
+
+
+            <input
+                id="qr-input"
+                type="text"
+                placeholder="اكتب رابط الموقع أو أي نص..."
+            >
+
+
+            <button onclick="generateQRCode()">
+
+                📱 إنشاء QR Code
+
+            </button>
+
+
+            <div
+                id="qr-result"
+                class="qr-result"
+            ></div>
+
+
+        </div>
+
+
+    </div>
+
+</section>
+
+
+
+<!-- =========================================================
+     AI SECTION
+========================================================= -->
+
+<section class="ai-section">
+
+
+    <div class="ai-content">
+
+
+        <span>
+            🤖 DIABLO AI
+        </span>
+
+
+        <h2>
+            مساعدك الذكي في المذاكرة
+        </h2>
+
+
+        <p>
+            اسأل، افهم، راجع، ولخص دروسك بسهولة.
+        </p>
+
+
+        <div class="ai-actions">
+
+
+            <button
+                class="main-btn"
+                onclick="openAI()"
+            >
+
+                ابدأ مع Diablo AI
+
+            </button>
+
+
+            <button
+                class="secondary-btn"
+                onclick="openSummarizer()"
+            >
+
+                📝 لخص درس
+
+            </button>
+
+
+        </div>
+
+
+    </div>
+
+
+</section>
+
+
+</main>
+
+
+
+<!-- =========================================================
+     FOOTER
+========================================================= -->
+
+<footer>
+
+
+    <div class="logo">
+        ⚡ DIABLO
+    </div>
+
+
+    <p>
+        منصة تعليمية للطلاب 🚀
+    </p>
+
+
+    <p>
+        © 2026 Diablo
+    </p>
+
+
+</footer>
+
+
+
+<!-- =========================================================
+     AI MODAL
+========================================================= -->
+
+<div
+    id="ai-modal"
+    class="modal"
+>
+
+
+    <div class="modal-content">
+
+
+        <button
+            class="close-btn"
+            onclick="closeAI()"
+        >
+
+            ×
+
+        </button>
+
+
+        <div class="ai-icon">
+            🤖
+        </div>
+
+
+        <h2>
+            Diablo AI
+        </h2>
+
+
+        <p>
+            اكتب سؤالك الدراسي هنا.
+        </p>
+
+
+        <textarea
+            id="ai-question"
+            placeholder="مثال: اشرح لي قانون في الرياضيات..."
+        ></textarea>
+
+
+        <button
+            onclick="askAI()"
+            class="main-btn"
+        >
+
+            اسأل Diablo AI 🚀
+
+        </button>
+
+
+        <div
+            id="ai-answer"
+            class="ai-answer"
+        ></div>
+
+
+    </div>
+
+
+</div>
+
+
+
+<!-- =========================================================
+     SUMMARIZER MODAL
+========================================================= -->
+
+<div
+    id="summarizer-modal"
+    class="modal"
+>
+
+
+    <div
+        class="modal-content summarizer-modal"
+    >
+
+
+        <button
+            class="close-btn"
+            onclick="closeSummarizer()"
+        >
+
+            ×
+
+        </button>
+
+
+        <div class="ai-icon">
+            📝
+        </div>
+
+
+        <h2>
+            ملخص الدروس
+        </h2>
+
+
+        <p>
+            الصق محتوى الدرس أو سجل شرحك، وبعدها خلي Diablo AI يلخصه.
+        </p>
+
+
+
+        <div class="summary-tabs">
+
+
+            <button
+                class="summary-tab active"
+                onclick="switchSummaryMode('text', this)"
+            >
+
+                📝 نص
+
+            </button>
+
+
+            <button
+                class="summary-tab"
+                onclick="switchSummaryMode('voice', this)"
+            >
+
+                🎙️ تسجيل
+
+            </button>
+
+
+        </div>
+
+
+
+        <div
+            id="summary-text-mode"
+            class="summary-mode"
+        >
+
+
+            <textarea
+                id="summary-text"
+                placeholder="الصق نص الدرس هنا..."
+            ></textarea>
+
+
+            <button
+                class="main-btn"
+                onclick="summarizeText()"
+            >
+
+                ✨ لخص الدرس
+
+            </button>
+
+
+        </div>
+
+
+
+        <div
+            id="summary-voice-mode"
+            class="summary-mode hidden"
+        >
+
+
+            <p
+                class="voice-status"
+                id="voice-status"
+            >
+
+                اضغط بدء التسجيل وابدأ شرح الدرس.
+
+            </p>
+
+
+
+            <div class="recording-controls">
+
+
+                <button
+                    class="main-btn"
+                    id="start-recording-btn"
+                    onclick="startRecording()"
+                >
+
+                    🎙️ بدء التسجيل
+
+                </button>
+
+
+                <button
+                    class="secondary-btn"
                     id="stop-recording-btn"
                     onclick="stopRecording()"
-                    disabled>
-                ⏹️ إيقاف
+                    disabled
+                >
+
+                    ⏹️ إيقاف
+
+                </button>
+
+
+            </div>
+
+
+
+            <div
+                class="recording-time"
+                id="recording-time"
+            >
+
+                00:00
+
+            </div>
+
+
+
+            <div class="transcript-box">
+
+
+                <label>
+                    النص المستخرج من التسجيل
+                </label>
+
+
+                <textarea
+                    id="voice-transcript"
+                    placeholder="سيظهر الكلام هنا أثناء التسجيل، ويمكنك تعديله قبل التلخيص..."
+                ></textarea>
+
+
+            </div>
+
+
+
+            <button
+                class="main-btn"
+                onclick="summarizeVoiceTranscript()"
+            >
+
+                ✨ لخص التسجيل
+
             </button>
 
-        </div>
 
 
-        <div class="recording-time"
-             id="recording-time">
-            00:00
-        </div>
+            <small class="browser-note">
 
+                التسجيل الصوتي يعتمد على دعم المتصفح للتعرف على الكلام.
+                لو التعرف غير متاح، اكتب أو الصق التفريغ النصي يدويًا.
 
-        <div class="transcript-box">
+            </small>
 
-            <label>
-                النص المستخرج من التسجيل
-            </label>
-
-            <textarea id="voice-transcript"
-                      placeholder="سيظهر الكلام هنا أثناء التسجيل، ويمكنك تعديله قبل التلخيص..."></textarea>
 
         </div>
 
 
-        <button class="main-btn"
-                onclick="summarizeVoiceTranscript()">
-            ✨ لخص التسجيل
-        </button>
 
-        <small class="browser-note">
-            التسجيل الصوتي يعتمد على دعم المتصفح للتعرف على الكلام.
-            لو التعرف غير متاح، اكتب أو الصق التفريغ النصي يدويًا.
-        </small>
+        <div
+            id="summary-answer"
+            class="summary-answer"
+        ></div>
+
 
     </div>
 
 
-    <div id="summary-answer"
-         class="summary-answer"></div>
-
 </div>
 
-</div><script src="script.js"></script></body>
+
+
+<!-- =========================================================
+     QR CODE LIBRARY
+========================================================= -->
+
+<script
+    src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"
+></script>
+
+
+
+<!-- =========================================================
+     DIABLO MAIN JAVASCRIPT
+========================================================= -->
+
+<script src="script.js"></script>
+
+
+</body>
+
 </html>

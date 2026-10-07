@@ -3807,3 +3807,131 @@ if ("serviceWorker" in navigator) {
     });
 
 }
+/* =========================================================
+   DIABLO TRANSLATOR
+========================================================= */
+
+async function translateText() {
+
+    const input =
+        document.getElementById("translator-input");
+
+    const language =
+        document.getElementById("translator-language");
+
+    const result =
+        document.getElementById("translator-result");
+
+    if (!input || !language || !result) {
+        return;
+    }
+
+    const text =
+        input.value.trim();
+
+    if (!text) {
+
+        result.textContent =
+            "اكتب النص الأول عشان نترجمه.";
+
+        return;
+    }
+
+    result.innerHTML =
+        "⏳ جاري الترجمة...";
+
+    try {
+
+        const response =
+            await fetch(
+                "https://api.mymemory.translated.net/get" +
+                "?q=" +
+                encodeURIComponent(text) +
+                "&langpair=ar|" +
+                encodeURIComponent(language.value)
+            );
+
+        const data =
+            await response.json();
+
+        const translated =
+            data?.responseData?.translatedText;
+
+        if (!translated) {
+
+            throw new Error(
+                "لم تصل نتيجة الترجمة."
+            );
+
+        }
+
+        result.textContent =
+            translated;
+
+    } catch (error) {
+
+        console.error(
+            "Translator Error:",
+            error
+        );
+
+        result.textContent =
+            "⚠️ حصلت مشكلة أثناء الترجمة. حاول مرة تانية.";
+
+    }
+
+}
+
+
+/* =========================================================
+   DIABLO QR CODE GENERATOR
+========================================================= */
+
+function generateQRCode() {
+
+    const input =
+        document.getElementById("qr-input");
+
+    const result =
+        document.getElementById("qr-result");
+
+    if (!input || !result) {
+        return;
+    }
+
+    const text =
+        input.value.trim();
+
+    if (!text) {
+
+        result.innerHTML =
+            "اكتب رابط أو نص الأول.";
+
+        return;
+    }
+
+    result.innerHTML = "";
+
+    if (
+        typeof QRCode ===
+        "undefined"
+    ) {
+
+        result.textContent =
+            "⚠️ مكتبة QR Code لم يتم تحميلها.";
+
+        return;
+    }
+
+    new QRCode(
+        result,
+        {
+            text: text,
+            width: 220,
+            height: 220,
+            correctLevel:
+                QRCode.CorrectLevel.H
+        }
+    );
+
+}

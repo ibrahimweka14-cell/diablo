@@ -900,3 +900,152 @@ nav button {
 }
 
 }
+/* =========================================================
+   DIABLO TRANSLATOR + QR CODE
+   ADD-ON ONLY
+========================================================= */
+
+/* =========================
+   TRANSLATOR
+========================= */
+
+#translator-input {
+    width: 100%;
+    min-height: 140px;
+    resize: vertical;
+    margin-bottom: 10px;
+
+    background: #080b12;
+    color: white;
+
+    border: 1px solid #29384d;
+    border-radius: 10px;
+
+    padding: 12px;
+    outline: none;
+
+    font-family: inherit;
+    line-height: 1.8;
+}
+
+#translator-input:focus {
+    border-color: #42a5ff;
+    box-shadow: 0 0 0 2px rgba(66, 165, 255, 0.08);
+}
+
+#translator-language {
+    width: 100%;
+    margin-bottom: 10px;
+
+    background: #080b12;
+    color: white;
+
+    border: 1px solid #29384d;
+    border-radius: 10px;
+
+    padding: 12px;
+    outline: none;
+
+    font-family: inherit;
+}
+
+#translator-language:focus {
+    border-color: #42a5ff;
+}
+
+#translator-result {
+    min-height: 55px;
+
+    margin-top: 15px;
+    padding: 14px;
+
+    background: #080b12;
+
+    border: 1px solid #29384d;
+    border-radius: 12px;
+
+    color: #42a5ff;
+
+    line-height: 1.9;
+    text-align: right;
+
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+
+/* =========================
+   QR CODE
+========================= */
+
+#qr-input {
+    width: 100%;
+    margin-bottom: 10px;
+
+    background: #080b12;
+    color: white;
+
+    border: 1px solid #29384d;
+    border-radius: 10px;
+
+    padding: 12px;
+    outline: none;
+
+    font-family: inherit;
+}
+
+#qr-input:focus {
+    border-color: #42a5ff;
+    box-shadow: 0 0 0 2px rgba(66, 165, 255, 0.08);
+}
+
+#qr-result {
+    min-height: 250px;
+
+    margin-top: 18px;
+    padding: 20px;
+
+    background: #080b12;
+
+    border: 1px solid #29384d;
+    border-radius: 14px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    text-align: center;
+}
+
+#qr-result img,
+#qr-result canvas {
+    max-width: 100%;
+    height: auto;
+
+    background: white;
+    padding: 10px;
+
+    border-radius: 10px;
+}
+
+
+/* =========================
+   MOBILE
+========================= */
+
+@media (max-width: 700px) {
+
+    #translator-input {
+        min-height: 120px;
+    }
+
+    #translator-result {
+        font-size: 14px;
+    }
+
+    #qr-result {
+        min-height: 220px;
+        padding: 15px;
+    }
+
+}
