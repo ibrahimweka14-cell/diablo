@@ -1,0 +1,52 @@
+{
+  "name": "Diablo | منصة التعليم الذكية",
+  "short_name": "DIABLO",
+  "description": "منصة تعليمية ذكية للطلاب تحتوي على الكتب الرسمية والأدوات التعليمية وDiablo AI.",
+  "lang": "ar",
+  "dir": "rtl",
+
+  "start_url": "./index.html",
+  "scope": "./",
+
+  "display": "standalone",
+  "orientation": "portrait",
+
+  "background_color": "#080b12",
+  "theme_color": "#080b12",
+
+  "icons": [
+    {
+      "src": "diablo-hero.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "diablo-hero.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+
+  "shortcuts": [
+    {
+      "name": "Diablo AI",
+      "short_name": "AI",
+      "description": "افتح Diablo AI",
+      "url": "./index.html#home"
+    },
+    {
+      "name": "الكتب الرسمية",
+      "short_name": "الكتب",
+      "description": "افتح مكتبة الكتب الرسمية",
+      "url": "./index.html#books"
+    },
+    {
+      "name": "تلخيص الدروس",
+      "short_name": "التلخيص",
+      "description": "افتح أداة تلخيص الدروس",
+      "url": "./index.html#tools"
+    }
+  ]
+}

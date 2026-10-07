@@ -3749,3 +3749,38 @@ function(event) {
 }
 
 );
+/* =========================================================
+   DIABLO PWA SERVICE WORKER
+========================================================= */
+
+if ("serviceWorker" in navigator) {
+
+    window.addEventListener("load", async () => {
+
+        try {
+
+            const registration =
+                await navigator.serviceWorker.register(
+                    "./service-worker.js",
+                    {
+                        scope: "./"
+                    }
+                );
+
+            console.log(
+                "DIABLO Service Worker registered:",
+                registration.scope
+            );
+
+        } catch (error) {
+
+            console.error(
+                "DIABLO Service Worker registration failed:",
+                error
+            );
+
+        }
+
+    });
+
+}
