@@ -2,7 +2,7 @@
    DIABLO PWA SERVICE WORKER
 ========================================================= */
 
-const CACHE_NAME = "diablo-pwa-v1";
+const CACHE_NAME = "diablo-pwa-v2";
 
 const APP_FILES = [
     "./",
@@ -74,20 +74,19 @@ self.addEventListener("fetch", event => {
 
     const request = event.request;
 
-    /*
-       الـPOST requests زي Diablo AI
-       لازم تفضل تروح للشبكة.
-    */
+    /* =========================
+       POST REQUESTS
+       Diablo AI وغيرها
+    ========================= */
 
     if (request.method !== "GET") {
         return;
     }
 
 
-    /*
-       طلبات خارج موقع DIABLO
-       نسيبها تشتغل من الشبكة مباشرة.
-    */
+    /* =========================
+       EXTERNAL REQUESTS
+    ========================= */
 
     const url = new URL(request.url);
 
@@ -96,11 +95,10 @@ self.addEventListener("fetch", event => {
     }
 
 
-    /*
-       صفحات الموقع:
-       Network First
-       ولو النت مش موجود استخدم النسخة المخزنة.
-    */
+    /* =========================
+       HTML PAGES
+       NETWORK FIRST
+    ========================= */
 
     if (request.mode === "navigate") {
 
@@ -110,16 +108,17 @@ self.addEventListener("fetch", event => {
 
                 .then(response => {
 
-                    const copy =
-                        response.clone();
+                    const copy = response.clone();
 
                     caches
                         .open(CACHE_NAME)
                         .then(cache => {
+
                             cache.put(
                                 request,
                                 copy
                             );
+
                         });
 
                     return response;
@@ -140,53 +139,48 @@ self.addEventListener("fetch", event => {
     }
 
 
-    /*
-       ملفات الموقع:
-       Cache First
-    */
+    /* =========================
+       CSS / JS / IMAGES
+       NETWORK FIRST
+       
+       مهم جدًا:
+       كل Refresh هيحاول يجيب
+       النسخة الجديدة الأول.
+    ========================= */
 
     event.respondWith(
 
-        caches.match(request)
+        fetch(request)
 
-            .then(cachedResponse => {
+            .then(response => {
 
-                if (cachedResponse) {
-                    return cachedResponse;
+                if (
+                    !response ||
+                    response.status !== 200
+                ) {
+                    return response;
                 }
 
+                const copy = response.clone();
 
-                return fetch(request)
+                caches
+                    .open(CACHE_NAME)
+                    .then(cache => {
 
-                    .then(response => {
-
-                        if (
-                            !response ||
-                            response.status !== 200
-                        ) {
-                            return response;
-                        }
-
-
-                        const copy =
-                            response.clone();
-
-
-                        caches
-                            .open(CACHE_NAME)
-                            .then(cache => {
-
-                                cache.put(
-                                    request,
-                                    copy
-                                );
-
-                            });
-
-
-                        return response;
+                        cache.put(
+                            request,
+                            copy
+                        );
 
                     });
+
+                return response;
+
+            })
+
+            .catch(() => {
+
+                return caches.match(request);
 
             })
 
