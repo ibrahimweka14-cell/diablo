@@ -3,9 +3,13 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Diablo | أدواتك في مكان واحد</title>
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Diablo | منصة التعليم</title>
 
     <link rel="stylesheet" href="style.css">
 </head>
@@ -13,229 +17,733 @@
 <body>
 
 <header>
-    <div class="logo">Diablo</div>
 
-    <p>أدواتك اليومية في مكان واحد 🚀</p>
-
-    <div class="search-box">
-        <input
-            id="searchInput"
-            type="text"
-            placeholder="🔎 ابحث عن أداة..."
-        >
+    <div class="logo">
+        ⚡ DIABLO
     </div>
+
+    <nav>
+
+        <a href="#home">الرئيسية</a>
+
+        <a href="#stages">المراحل</a>
+
+        <a href="#books">الكتب</a>
+
+        <a href="#tools">الأدوات</a>
+
+        <button onclick="openAI()">
+            🤖 Diablo AI
+        </button>
+
+    </nav>
+
 </header>
 
-<section class="hero-image">
+
+<main>
+
+
+<!-- =========================
+     HERO
+     ========================= -->
+
+<section id="home" class="hero">
+
+    <div class="hero-text">
+
+        <span>
+            🚀 منصة تعليمية ذكية
+        </span>
+
+        <h1>
+            اتعلم أسرع مع
+            <strong>DIABLO</strong>
+        </h1>
+
+        <p>
+            أدوات تعليمية للطلاب من الحضانة
+            حتى الثانوية في مكان واحد.
+        </p>
+
+        <div class="hero-buttons">
+
+            <a
+                href="#stages"
+                class="main-btn"
+            >
+                ابدأ التعلم 🎓
+            </a>
+
+            <button
+                class="secondary-btn"
+                onclick="openAI()"
+            >
+                اسأل Diablo AI 🤖
+            </button>
+
+        </div>
+
+    </div>
+
+
     <img
         src="diablo-hero.png"
-        alt="Diablo - أدواتك في مكان واحد"
+        alt="Diablo"
+        class="hero-image"
     >
+
 </section>
 
 
-<main class="tools">
 
-    <!-- الحاسبة -->
-    <div class="tool-card">
-        <div class="icon">🧮</div>
-        <h2>الحاسبة</h2>
-        <p>حاسبة كاملة للعمليات الحسابية.</p>
-        <button onclick="openTool('calculator')">
-            استخدم الآن
-        </button>
+<!-- =========================
+     STAGES
+     ========================= -->
+
+<section id="stages" class="section">
+
+    <div class="section-title">
+
+        <span>
+            📚 اختر مرحلتك
+        </span>
+
+        <h2>
+            التعليم حسب المرحلة
+        </h2>
+
+        <p>
+            اختار مرحلتك وشوف الأدوات المناسبة ليك.
+        </p>
+
     </div>
 
 
-    <!-- النسبة -->
-    <div class="tool-card">
-        <div class="icon">📊</div>
-        <h2>النسبة المئوية</h2>
-        <p>احسب النسب المئوية بسهولة.</p>
-        <button onclick="openTool('percentage')">
-            استخدم الآن
-        </button>
+    <div class="stage-grid">
+
+
+        <div
+            class="stage-card secondary"
+            onclick="openStage('secondary')"
+        >
+
+            <div class="stage-icon">
+                🎓
+            </div>
+
+            <h3>
+                الثانوي
+            </h3>
+
+            <p>
+                أدوات ومساعدات للمرحلة الثانوية
+            </p>
+
+            <span>
+                افتح القسم ←
+            </span>
+
+        </div>
+
+
+        <div
+            class="stage-card preparatory"
+            onclick="openStage('preparatory')"
+        >
+
+            <div class="stage-icon">
+                📚
+            </div>
+
+            <h3>
+                الإعدادي
+            </h3>
+
+            <p>
+                مذاكرة وحسابات وأدوات للإعدادي
+            </p>
+
+            <span>
+                افتح القسم ←
+            </span>
+
+        </div>
+
+
+        <div
+            class="stage-card primary"
+            onclick="openStage('primary')"
+        >
+
+            <div class="stage-icon">
+                📖
+            </div>
+
+            <h3>
+                الابتدائي
+            </h3>
+
+            <p>
+                تعلم بسيط وممتع للأطفال
+            </p>
+
+            <span>
+                افتح القسم ←
+            </span>
+
+        </div>
+
+
+        <div
+            class="stage-card kindergarten"
+            onclick="openStage('kindergarten')"
+        >
+
+            <div class="stage-icon">
+                🧸
+            </div>
+
+            <h3>
+                الحضانة
+            </h3>
+
+            <p>
+                حروف وأرقام وأشكال وألوان
+            </p>
+
+            <span>
+                افتح القسم ←
+            </span>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+
+<!-- =========================
+     STAGE CONTENT
+     ========================= -->
+
+<section
+    id="stage-content"
+    class="section hidden"
+>
+
+    <button
+        class="back-btn"
+        onclick="closeStage()"
+    >
+        ← رجوع للمراحل
+    </button>
+
+
+    <div class="content-box">
+
+        <div id="stage-icon"></div>
+
+        <h2 id="stage-title"></h2>
+
+        <p id="stage-description"></p>
+
+        <div
+            id="stage-tools"
+            class="mini-grid"
+        ></div>
+
+
+        <div
+            id="stage-tool-panel"
+            class="stage-tool-panel hidden"
+        >
+
+            <button
+                class="back-btn"
+                onclick="closeStageTool()"
+            >
+                ← رجوع لأدوات المرحلة
+            </button>
+
+            <div id="stage-tool-content"></div>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+
+<!-- =========================
+     BOOKS
+     ========================= -->
+
+<section id="books" class="section">
+
+    <div class="section-title">
+
+        <span>
+            📚 Study Books
+        </span>
+
+        <h2>
+            مكتبة Diablo
+        </h2>
+
+        <p>
+            اختار المرحلة والصف والمادة للوصول للمصادر التعليمية.
+        </p>
+
     </div>
 
 
-    <!-- الخصم -->
-    <div class="tool-card">
-        <div class="icon">💸</div>
-        <h2>حساب الخصم</h2>
-        <p>احسب السعر بعد الخصم.</p>
-        <button onclick="openTool('discount')">
-            استخدم الآن
+    <div class="book-box">
+
+
+        <select
+            id="book-stage"
+            onchange="updateBookGrades()"
+        >
+
+            <option value="">
+                🎓 اختر المرحلة
+            </option>
+
+            <option value="secondary">
+                الثانوية
+            </option>
+
+            <option value="preparatory">
+                الإعدادية
+            </option>
+
+            <option value="primary">
+                الابتدائية
+            </option>
+
+            <option value="kindergarten">
+                الحضانة
+            </option>
+
+        </select>
+
+
+        <select
+            id="book-grade"
+            onchange="updateBookSubjects()"
+        >
+
+            <option value="">
+                📚 اختر الصف
+            </option>
+
+        </select>
+
+
+        <select id="book-subject">
+
+            <option value="">
+                📖 اختر المادة
+            </option>
+
+        </select>
+
+
+        <button
+            onclick="showBooks()"
+            class="book-main-btn"
+        >
+            🔎 عرض الكتاب
         </button>
+
+
+        <div
+            id="books-result"
+            class="books-result"
+        ></div>
+
+    </div>
+
+</section>
+
+
+
+<!-- =========================
+     USEFUL TOOLS
+     ========================= -->
+
+<section id="tools" class="section">
+
+    <div class="section-title">
+
+        <span>
+            🛠️ Useful Tools
+        </span>
+
+        <h2>
+            أدوات مفيدة
+        </h2>
+
+        <p>
+            أدوات بسيطة تساعدك في الدراسة والحياة اليومية.
+        </p>
+
     </div>
 
 
-    <!-- الوحدات -->
-    <div class="tool-card">
-        <div class="icon">🔄</div>
-        <h2>تحويل الوحدات</h2>
-        <p>حوّل بين وحدات القياس المختلفة.</p>
-        <button onclick="openTool('units')">
-            استخدم الآن
-        </button>
+    <div class="tools-grid">
+
+
+        <div class="tool-card">
+
+            <h3>
+                🧮 حساب النسبة المئوية
+            </h3>
+
+            <input
+                id="percent-total"
+                type="number"
+                placeholder="الدرجة الكلية"
+            >
+
+            <input
+                id="percent-score"
+                type="number"
+                placeholder="درجتك"
+            >
+
+            <button onclick="calculatePercentage()">
+                احسب
+            </button>
+
+            <div
+                id="percentage-result"
+                class="result"
+            ></div>
+
+        </div>
+
+
+        <div class="tool-card">
+
+            <h3>
+                🎯 الدرجة المطلوبة
+            </h3>
+
+            <input
+                id="required-total"
+                type="number"
+                placeholder="الدرجة الكلية"
+            >
+
+            <input
+                id="required-current"
+                type="number"
+                placeholder="درجتك الحالية"
+            >
+
+            <input
+                id="required-percent"
+                type="number"
+                placeholder="النسبة المطلوبة %"
+            >
+
+            <button onclick="calculateRequired()">
+                احسب
+            </button>
+
+            <div
+                id="required-result"
+                class="result"
+            ></div>
+
+        </div>
+
+
+        <div class="tool-card">
+
+            <h3>
+                ⏱️ مؤقت المذاكرة
+            </h3>
+
+            <input
+                id="timer-minutes"
+                type="number"
+                placeholder="عدد الدقائق"
+            >
+
+            <button onclick="startTimer()">
+                ابدأ
+            </button>
+
+            <button onclick="stopTimer()">
+                إيقاف
+            </button>
+
+            <div
+                id="timer-display"
+                class="timer"
+            >
+                00:00
+            </div>
+
+        </div>
+
+
+        <div class="tool-card">
+
+            <h3>
+                📅 عداد الامتحان
+            </h3>
+
+            <input
+                id="exam-date"
+                type="date"
+            >
+
+            <button onclick="examCountdown()">
+                احسب
+            </button>
+
+            <div
+                id="exam-result"
+                class="result"
+            ></div>
+
+        </div>
+
+
+        <div class="tool-card">
+
+            <h3>
+                🎂 حساب العمر
+            </h3>
+
+            <input
+                id="birth-date"
+                type="date"
+            >
+
+            <button onclick="calculateAge()">
+                احسب
+            </button>
+
+            <div
+                id="age-result"
+                class="result"
+            ></div>
+
+        </div>
+
+
+        <div class="tool-card">
+
+            <h3>
+                📆 الفرق بين تاريخين
+            </h3>
+
+            <input
+                id="date-one"
+                type="date"
+            >
+
+            <input
+                id="date-two"
+                type="date"
+            >
+
+            <button onclick="dateDifference()">
+                احسب
+            </button>
+
+            <div
+                id="date-result"
+                class="result"
+            ></div>
+
+        </div>
+
+
+        <div class="tool-card">
+
+            <h3>
+                🔢 آلة حاسبة
+            </h3>
+
+            <input
+                id="calculator-input"
+                type="text"
+                placeholder="مثال: 25 + 15"
+            >
+
+            <button onclick="calculate()">
+                احسب
+            </button>
+
+            <div
+                id="calculator-result"
+                class="result"
+            ></div>
+
+        </div>
+
+
+        <div class="tool-card">
+
+            <h3>
+                🔄 تحويل الوحدات
+            </h3>
+
+            <input
+                id="unit-value"
+                type="number"
+                placeholder="القيمة"
+            >
+
+            <select id="unit-type">
+
+                <option value="km-m">
+                    كيلومتر → متر
+                </option>
+
+                <option value="m-km">
+                    متر → كيلومتر
+                </option>
+
+                <option value="kg-g">
+                    كيلوجرام → جرام
+                </option>
+
+                <option value="g-kg">
+                    جرام → كيلوجرام
+                </option>
+
+            </select>
+
+            <button onclick="convertUnit()">
+                تحويل
+            </button>
+
+            <div
+                id="unit-result"
+                class="result"
+            ></div>
+
+        </div>
+
     </div>
 
+</section>
 
-    <!-- الكلمات -->
-    <div class="tool-card">
-        <div class="icon">🔤</div>
-        <h2>عداد الكلمات</h2>
-        <p>احسب الكلمات والحروف والمسافات.</p>
-        <button onclick="openTool('words')">
-            استخدم الآن
+
+
+<!-- =========================
+     AI SECTION
+     ========================= -->
+
+<section class="ai-section">
+
+    <div class="ai-content">
+
+        <span>
+            🤖 DIABLO AI
+        </span>
+
+        <h2>
+            مساعدك الذكي في المذاكرة
+        </h2>
+
+        <p>
+            اسأل، افهم، راجع، وخلي المذاكرة أسهل.
+        </p>
+
+        <button
+            class="main-btn"
+            onclick="openAI()"
+        >
+            ابدأ مع Diablo AI
         </button>
+
     </div>
 
-
-    <!-- العمر -->
-    <div class="tool-card">
-        <div class="icon">📅</div>
-        <h2>حساب العمر</h2>
-        <p>احسب عمرك بالسنوات والأشهر والأيام.</p>
-        <button onclick="openTool('age')">
-            استخدم الآن
-        </button>
-    </div>
-
-
-    <!-- QR -->
-    <div class="tool-card">
-        <div class="icon">📱</div>
-        <h2>QR Code</h2>
-        <p>أنشئ QR Code لأي رابط أو نص.</p>
-        <button onclick="openTool('qr')">
-            استخدم الآن
-        </button>
-    </div>
-
-
-    <!-- المؤقت -->
-    <div class="tool-card">
-        <div class="icon">⏱️</div>
-        <h2>المؤقت</h2>
-        <p>حدد وقتًا وسيقوم Diablo بالعد التنازلي.</p>
-        <button onclick="openTool('timer')">
-            استخدم الآن
-        </button>
-    </div>
-
-
-    <!-- الفرق بين تاريخين -->
-    <div class="tool-card">
-        <div class="icon">📆</div>
-        <h2>الفرق بين تاريخين</h2>
-        <p>اعرف عدد الأيام بين تاريخين.</p>
-        <button onclick="openTool('dateDifference')">
-            استخدم الآن
-        </button>
-    </div>
-
-
-    <!-- تحويل الأرقام -->
-    <div class="tool-card">
-        <div class="icon">🔢</div>
-        <h2>تحويل الأرقام</h2>
-        <p>حوّل الأرقام بين Decimal و Binary و Hex.</p>
-        <button onclick="openTool('numbers')">
-            استخدم الآن
-        </button>
-    </div>
-
-
-    <!-- تغيير حالة الحروف -->
-    <div class="tool-card">
-        <div class="icon">🔠</div>
-        <h2>تغيير حالة الحروف</h2>
-        <p>حوّل النص الإنجليزي إلى أحرف كبيرة أو صغيرة.</p>
-        <button onclick="openTool('case')">
-            استخدم الآن
-        </button>
-    </div>
-
-
-    <!-- الألوان -->
-    <div class="tool-card">
-        <div class="icon">🎨</div>
-        <h2>مولد الألوان</h2>
-        <p>أنشئ لونًا عشوائيًا واعرف كود HEX.</p>
-        <button onclick="openTool('colors')">
-            استخدم الآن
-        </button>
-    </div>
-
-
-    <!-- تحويل الطول -->
-    <div class="tool-card">
-        <div class="icon">📏</div>
-        <h2>تحويل الطول</h2>
-        <p>حوّل بين المتر والسنتيمتر والكيلومتر.</p>
-        <button onclick="openTool('length')">
-            استخدم الآن
-        </button>
-    </div>
-
-
-    <!-- الفائدة -->
-    <div class="tool-card premium">
-        <div class="icon">💰</div>
-        <h2>الفائدة البسيطة</h2>
-        <p>احسب قيمة الفائدة والمبلغ النهائي.</p>
-        <button onclick="openTool('interest')">
-            استخدم الآن
-        </button>
-    </div>
-
-
-    <!-- تنظيف النص -->
-    <div class="tool-card">
-        <div class="icon">📝</div>
-        <h2>منظّم النص</h2>
-        <p>نظّف النص من المسافات والأسطر الزائدة.</p>
-        <button onclick="openTool('textCleaner')">
-            استخدم الآن
-        </button>
-    </div>
-
-
-    <!-- أدوات متقدمة -->
-    <div class="tool-card premium">
-        <div class="icon">⭐</div>
-        <h2>أدوات متقدمة</h2>
-        <p>مجموعة أدوات إضافية لـ Diablo.</p>
-        <button onclick="openTool('advanced')">
-            استخدم الآن
-        </button>
-    </div>
+</section>
 
 </main>
 
 
-<!-- النافذة -->
-<div id="toolModal" class="modal">
+
+<!-- =========================
+     FOOTER
+     ========================= -->
+
+<footer>
+
+    <div class="logo">
+        ⚡ DIABLO
+    </div>
+
+    <p>
+        منصة تعليمية للطلاب 🚀
+    </p>
+
+    <p>
+        © 2026 Diablo
+    </p>
+
+</footer>
+
+
+
+<!-- =========================
+     AI MODAL
+     ========================= -->
+
+<div id="ai-modal" class="modal">
 
     <div class="modal-content">
 
         <button
             class="close-btn"
-            onclick="closeTool()"
+            onclick="closeAI()"
         >
             ×
         </button>
 
-        <div id="toolContent"></div>
+        <div class="ai-icon">
+            🤖
+        </div>
+
+        <h2>
+            Diablo AI
+        </h2>
+
+        <p>
+            اكتب سؤالك الدراسي هنا.
+        </p>
+
+        <textarea
+            id="ai-question"
+            placeholder="مثال: اشرح لي قانون في الرياضيات..."
+        ></textarea>
+
+        <button
+            onclick="askAI()"
+            class="main-btn"
+        >
+            اسأل Diablo AI 🚀
+        </button>
+
+        <div
+            id="ai-answer"
+            class="ai-answer"
+        ></div>
 
     </div>
 
 </div>
-
-
-<footer>
-    <p>© 2026 Diablo — جميع الحقوق محفوظة</p>
-</footer>
 
 
 <script src="script.js"></script>
