@@ -102,8 +102,18 @@ async function askAI() {
         return;
     }
 
-    const question =
+    const rawQuestion =
         input.value.trim();
+
+    const modeSelect = document.getElementById("ai-mode");
+    const modePrompts = {
+        explain: "اشرح المطلوب للطالب بلغة عربية بسيطة ومناسبة لمرحلته، مع مثال عند الحاجة. ",
+        steps: "ساعد الطالب على الحل خطوة بخطوة، ووضح سبب كل خطوة بدل إعطاء النتيجة فقط. ",
+        quiz: "حوّل الموضوع إلى اختبار تفاعلي قصير، اسأل سؤالًا واحدًا في كل مرة وانتظر إجابة الطالب. ",
+        review: "راجع إجابة الطالب بدقة، وحدد الصحيح والخطأ واشرح التصحيح باحترام. "
+    };
+    const mode = modeSelect ? modeSelect.value : "explain";
+    const question = rawQuestion ? ((modePrompts[mode] || "") + rawQuestion) : "";
 
     if (!question) {
 
@@ -3807,131 +3817,206 @@ if ("serviceWorker" in navigator) {
     });
 
 }
+
 /* =========================================================
-   DIABLO TRANSLATOR
+   DIABLO PLUS: FILES, QUIZZES, PLANS, PROGRESS, TRANSLATOR, QR
+   Additive module; original tools/functions remain intact.
 ========================================================= */
+
+function setFeatureMessage(id, message, isError = false) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = message;
+    el.style.display = "block";
+    el.style.color = isError ? "#ff9b9b" : "";
+}
+
+async function processStudyFile() {
+    const input = document.getElementById("study-file");
+    const file = input?.files?.[0];
+    if (!file) {
+        setFeatureMessage("study-file-status", "اختار ملف PDF أو صورة أو ملف نصي الأول.", true);
+        return;
+    }
+    const status = document.getElementById("study-file-status");
+    const result = document.getElementById("study-file-result");
+    if (status) status.textContent = "⏳ جاري قراءة الملف...";
+    if (result) result.textContent = "";
+    try {
+        let extracted = "";
+        if (file.type === "text/plain" || /\.txt$/i.test(file.name)) {
+            extracted = await file.text();
+        } else if (file.type === "application/pdf" || /\.pdf$/i.test(file.name)) {
+            if (!window.pdfjsLib) throw new Error("مكتبة قراءة PDF لم تُحمّل. تأكد من اتصال الإنترنت ثم حدّث الصفحة.");
+            window.pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+            const buffer = await file.arrayBuffer();
+            const pdf = await window.pdfjsLib.getDocument({ data: buffer }).promise;
+            const pageTexts = [];
+            for (let pageNo = 1; pageNo <= pdf.numPages; pageNo++) {
+                const page = await pdf.getPage(pageNo);
+                const content = await page.getTextContent();
+                pageTexts.push(content.items.map(item => item.str).join(" "));
+            }
+            extracted = pageTexts.join("\n\n");
+            if (!extracted.trim()) throw new Error("الـPDF غالبًا عبارة عن صور ممسوحة. جرّب رفع صورة واضحة للصفحة بدلًا منه.");
+        } else if (file.type.startsWith("image/")) {
+            if (!window.Tesseract) throw new Error("مكتبة قراءة الصور لم تُحمّل. تأكد من اتصال الإنترنت ثم حدّث الصفحة.");
+            if (status) status.textContent = "⏳ جاري استخراج الكلام من الصورة، وده ممكن ياخد شوية وقت...";
+            const ocr = await window.Tesseract.recognize(file, "ara+eng");
+            extracted = ocr?.data?.text || "";
+        } else {
+            throw new Error("نوع الملف غير مدعوم. استخدم PDF أو صورة أو TXT.");
+        }
+        extracted = extracted.trim();
+        if (extracted.length < 20) throw new Error("النص المستخرج قليل جدًا. جرّب ملف أو صورة أوضح.");
+        if (status) status.textContent = "✅ تم استخراج النص. جاري إنشاء الملخص...";
+        const summary = await requestSummary(extracted);
+        if (result) {
+            result.textContent = "ملخص الملف:\n\n" + summary;
+            result.style.display = "block";
+        }
+        if (status) status.textContent = "✅ اكتمل استخراج النص والتلخيص.";
+        addStudyPoints("file-summary");
+    } catch (error) {
+        console.error("DIABLO file summary error:", error);
+        setFeatureMessage("study-file-status", "⚠️ " + (error?.message || "تعذر قراءة الملف أو تلخيصه."), true);
+    }
+}
+
+async function generateLessonQuiz() {
+    const topic = document.getElementById("quiz-topic")?.value.trim() || "الدرس المرفق";
+    const source = document.getElementById("quiz-source")?.value.trim() || "";
+    const out = document.getElementById("quiz-result");
+    if (!source && !topic) return setFeatureMessage("quiz-result", "اكتب اسم الدرس أو محتواه الأول.", true);
+    if (out) { out.style.display = "block"; out.textContent = "⏳ جاري إعداد الاختبار..."; }
+    try {
+        const prompt = "أنت منشئ اختبارات تعليمية لمنصة DIABLO. أنشئ 8 أسئلة باللغة العربية عن الموضوع التالي: " + topic + ". " +
+            "نوّع بين اختيار من متعدد وصح/غلط وأسئلة قصيرة، وضع الإجابة الصحيحة وتفسيرًا مختصرًا بعد كل سؤال. " +
+            "لا تدّعِ أن الأسئلة مأخوذة من منهج رسمي إذا لم يكن ذلك واضحًا. " + (source ? "اعتمد أساسًا على المحتوى التالي ولا تضف معلومات خارجه: \n" + source : "");
+        const response = await fetch(DIABLO_AI_URL, {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ messages: [{ role: "user", content: prompt }] })
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data?.error || data?.message || "تعذر إنشاء الاختبار.");
+        const text = extractAIText(data);
+        if (!text) throw new Error("لم يصل اختبار من Diablo AI.");
+        if (out) out.textContent = text;
+        addStudyPoints("quiz-generated");
+    } catch (error) {
+        console.error("DIABLO quiz error:", error);
+        setFeatureMessage("quiz-result", "⚠️ " + (error?.message || "حصلت مشكلة أثناء إنشاء الاختبار."), true);
+    }
+}
+
+async function createSmartStudyPlan() {
+    const subjects = document.getElementById("plan-subjects")?.value.trim() || "";
+    const days = Math.max(1, Math.min(90, Number(document.getElementById("plan-days")?.value) || 7));
+    const hours = Math.max(1, Math.min(12, Number(document.getElementById("plan-hours")?.value) || 3));
+    const out = document.getElementById("smart-plan-result");
+    if (!subjects) return setFeatureMessage("smart-plan-result", "اكتب المواد والدروس اللي محتاج تذاكرها الأول.", true);
+    if (out) { out.style.display = "block"; out.textContent = "⏳ جاري تنظيم خطة المذاكرة..."; }
+    try {
+        const prompt = "أنشئ خطة مذاكرة عملية باللغة العربية لمدة " + days + " يومًا، بمعدل " + hours + " ساعات يوميًا، بناءً فقط على المواد والدروس التالية: \n" + subjects +
+            "\nوزّع الوقت على فترات قصيرة، وأضف مراجعة واستراحات واختبارًا ذاتيًا. لا تفترض مواعيد امتحانات لم يذكرها الطالب.";
+        const response = await fetch(DIABLO_AI_URL, {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ messages: [{ role: "user", content: prompt }] })
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data?.error || data?.message || "تعذر إنشاء الخطة.");
+        const text = extractAIText(data);
+        if (!text) throw new Error("لم تصل خطة من Diablo AI.");
+        if (out) out.textContent = text;
+        addStudyPoints("plan-created");
+    } catch (error) {
+        console.error("DIABLO plan error:", error);
+        setFeatureMessage("smart-plan-result", "⚠️ " + (error?.message || "حصلت مشكلة أثناء إنشاء الخطة."), true);
+    }
+}
+
+const DIABLO_PROGRESS_KEY = "diabloStudyProgressV1";
+function readStudyProgress() {
+    try { return JSON.parse(localStorage.getItem(DIABLO_PROGRESS_KEY) || "{}"); }
+    catch { return {}; }
+}
+function saveStudyProgress(data) {
+    try { localStorage.setItem(DIABLO_PROGRESS_KEY, JSON.stringify(data)); }
+    catch (error) { console.warn("Progress could not be saved:", error); }
+}
+function addStudyPoints(action) {
+    const data = readStudyProgress();
+    data.points = Number(data.points || 0) + 10;
+    data.actions = Array.isArray(data.actions) ? data.actions : [];
+    data.actions.push({ action, at: new Date().toISOString() });
+    saveStudyProgress(data);
+    renderStudyProgress();
+}
+function renderStudyProgress() {
+    const data = readStudyProgress();
+    const checks = [...document.querySelectorAll(".diablo-task")];
+    const done = checks.filter(el => data.tasks?.includes(el.value));
+    checks.forEach(el => { el.checked = !!data.tasks?.includes(el.value); });
+    const pct = checks.length ? Math.round(done.length / checks.length * 100) : 0;
+    const fill = document.getElementById("progress-fill");
+    if (fill) fill.style.width = pct + "%";
+    const summary = document.getElementById("progress-summary");
+    if (summary) summary.textContent = "إنجازك: " + pct + "% — نقاطك: " + Number(data.points || 0);
+    const badges = document.getElementById("achievement-badges");
+    if (badges) {
+        const earned = [];
+        if (done.length >= 1) earned.push("🌱 أول خطوة");
+        if (done.length >= 2) earned.push("📘 ملتزم بالمراجعة");
+        if (done.length >= 4) earned.push("🏆 بطل الإنجاز");
+        if (Number(data.points || 0) >= 50) earned.push("⚡ 50 نقطة");
+        badges.innerHTML = earned.length ? earned.map(x => '<span class="achievement-badge">' + escapeHTML(x) + '</span>').join("") : '<span class="achievement-badge">ابدأ أول مهمة لفتح شارتك الأولى</span>';
+    }
+}
+function resetStudyProgress() {
+    if (!confirm("متأكد إنك عايز تمسح سجل الإنجاز والنقاط المحفوظة على الجهاز ده؟")) return;
+    try { localStorage.removeItem(DIABLO_PROGRESS_KEY); } catch {}
+    renderStudyProgress();
+}
+
+document.addEventListener("change", event => {
+    if (!event.target?.classList?.contains("diablo-task")) return;
+    const data = readStudyProgress();
+    const tasks = new Set(Array.isArray(data.tasks) ? data.tasks : []);
+    if (event.target.checked) tasks.add(event.target.value); else tasks.delete(event.target.value);
+    data.tasks = [...tasks];
+    saveStudyProgress(data);
+    renderStudyProgress();
+});
 
 async function translateText() {
-
-    const input =
-        document.getElementById("translator-input");
-
-    const language =
-        document.getElementById("translator-language");
-
-    const result =
-        document.getElementById("translator-result");
-
-    if (!input || !language || !result) {
-        return;
-    }
-
-    const text =
-        input.value.trim();
-
-    if (!text) {
-
-        result.textContent =
-            "اكتب النص الأول عشان نترجمه.";
-
-        return;
-    }
-
-    result.innerHTML =
-        "⏳ جاري الترجمة...";
-
+    const input = document.getElementById("translator-input");
+    const language = document.getElementById("translator-language");
+    const result = document.getElementById("translator-result");
+    if (!input || !language || !result) return;
+    const text = input.value.trim();
+    if (!text) { result.textContent = "اكتب النص الأول عشان نترجمه."; result.style.display = "block"; return; }
+    result.textContent = "⏳ جاري الترجمة..."; result.style.display = "block";
     try {
-
-        const response =
-            await fetch(
-                "https://api.mymemory.translated.net/get" +
-                "?q=" +
-                encodeURIComponent(text) +
-                "&langpair=ar|" +
-                encodeURIComponent(language.value)
-            );
-
-        const data =
-            await response.json();
-
-        const translated =
-            data?.responseData?.translatedText;
-
-        if (!translated) {
-
-            throw new Error(
-                "لم تصل نتيجة الترجمة."
-            );
-
-        }
-
-        result.textContent =
-            translated;
-
+        const response = await fetch("https://api.mymemory.translated.net/get?q=" + encodeURIComponent(text) + "&langpair=ar|" + encodeURIComponent(language.value));
+        const data = await response.json();
+        const translated = data?.responseData?.translatedText;
+        if (!response.ok || !translated) throw new Error("لم تصل نتيجة الترجمة.");
+        result.textContent = translated;
     } catch (error) {
-
-        console.error(
-            "Translator Error:",
-            error
-        );
-
-        result.textContent =
-            "⚠️ حصلت مشكلة أثناء الترجمة. حاول مرة تانية.";
-
+        console.error("Translator Error:", error);
+        result.textContent = "⚠️ حصلت مشكلة أثناء الترجمة. حاول مرة تانية.";
     }
-
 }
-
-
-/* =========================================================
-   DIABLO QR CODE GENERATOR
-========================================================= */
 
 function generateQRCode() {
-
-    const input =
-        document.getElementById("qr-input");
-
-    const result =
-        document.getElementById("qr-result");
-
-    if (!input || !result) {
-        return;
-    }
-
-    const text =
-        input.value.trim();
-
-    if (!text) {
-
-        result.innerHTML =
-            "اكتب رابط أو نص الأول.";
-
-        return;
-    }
-
+    const input = document.getElementById("qr-input");
+    const result = document.getElementById("qr-result");
+    if (!input || !result) return;
+    const text = input.value.trim();
+    if (!text) { result.textContent = "اكتب رابط أو نص الأول."; return; }
     result.innerHTML = "";
-
-    if (
-        typeof QRCode ===
-        "undefined"
-    ) {
-
-        result.textContent =
-            "⚠️ مكتبة QR Code لم يتم تحميلها.";
-
-        return;
-    }
-
-    new QRCode(
-        result,
-        {
-            text: text,
-            width: 220,
-            height: 220,
-            correctLevel:
-                QRCode.CorrectLevel.H
-        }
-    );
-
+    if (typeof QRCode === "undefined") { result.textContent = "⚠️ مكتبة QR Code لم يتم تحميلها."; return; }
+    new QRCode(result, { text, width: 220, height: 220, correctLevel: QRCode.CorrectLevel.H });
 }
+
+document.addEventListener("DOMContentLoaded", renderStudyProgress);

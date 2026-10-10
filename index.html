@@ -58,7 +58,6 @@
         href="style.css"
     >
 
-
     <!-- =====================================================
          GOOGLE ANALYTICS
     ====================================================== -->
@@ -78,17 +77,16 @@
         }
 
         gtag(
-            "js",
+            'js',
             new Date()
         );
 
         gtag(
-            "config",
-            "G-3KK83SHRX"
+            'config',
+            'G-3KK83SHRX'
         );
 
     </script>
-
 
 </head>
 
@@ -124,6 +122,9 @@
         <a href="#tools">
             الأدوات
         </a>
+
+        <a href="#smart-study">DIABLO PLUS</a>
+        <a href="#founder">المؤسس</a>
 
 
         <button onclick="openAI()">
@@ -601,6 +602,7 @@
 
         <div class="tool-card">
 
+
             <h3>
                 🧮 حساب النسبة المئوية
             </h3>
@@ -621,7 +623,9 @@
 
 
             <button onclick="calculatePercentage()">
+
                 احسب
+
             </button>
 
 
@@ -630,6 +634,7 @@
                 class="result"
             ></div>
 
+
         </div>
 
 
@@ -637,6 +642,7 @@
         <!-- REQUIRED GRADE -->
 
         <div class="tool-card">
+
 
             <h3>
                 🎯 الدرجة المطلوبة
@@ -665,7 +671,9 @@
 
 
             <button onclick="calculateRequired()">
+
                 احسب
+
             </button>
 
 
@@ -674,6 +682,7 @@
                 class="result"
             ></div>
 
+
         </div>
 
 
@@ -681,6 +690,7 @@
         <!-- TIMER -->
 
         <div class="tool-card">
+
 
             <h3>
                 ⏱️ مؤقت المذاكرة
@@ -695,12 +705,16 @@
 
 
             <button onclick="startTimer()">
+
                 ابدأ
+
             </button>
 
 
             <button onclick="stopTimer()">
+
                 إيقاف
+
             </button>
 
 
@@ -708,8 +722,11 @@
                 id="timer-display"
                 class="timer"
             >
+
                 00:00
+
             </div>
+
 
         </div>
 
@@ -718,6 +735,7 @@
         <!-- EXAM COUNTDOWN -->
 
         <div class="tool-card">
+
 
             <h3>
                 📅 عداد الامتحان
@@ -731,7 +749,9 @@
 
 
             <button onclick="examCountdown()">
+
                 احسب
+
             </button>
 
 
@@ -740,6 +760,7 @@
                 class="result"
             ></div>
 
+
         </div>
 
 
@@ -747,6 +768,7 @@
         <!-- AGE -->
 
         <div class="tool-card">
+
 
             <h3>
                 🎂 حساب العمر
@@ -760,7 +782,9 @@
 
 
             <button onclick="calculateAge()">
+
                 احسب
+
             </button>
 
 
@@ -769,6 +793,7 @@
                 class="result"
             ></div>
 
+
         </div>
 
 
@@ -776,6 +801,7 @@
         <!-- DATE DIFFERENCE -->
 
         <div class="tool-card">
+
 
             <h3>
                 📆 الفرق بين تاريخين
@@ -795,7 +821,9 @@
 
 
             <button onclick="dateDifference()">
+
                 احسب
+
             </button>
 
 
@@ -804,6 +832,7 @@
                 class="result"
             ></div>
 
+
         </div>
 
 
@@ -811,6 +840,7 @@
         <!-- CALCULATOR -->
 
         <div class="tool-card">
+
 
             <h3>
                 🔢 آلة حاسبة
@@ -825,7 +855,9 @@
 
 
             <button onclick="calculate()">
+
                 احسب
+
             </button>
 
 
@@ -834,6 +866,7 @@
                 class="result"
             ></div>
 
+
         </div>
 
 
@@ -841,6 +874,7 @@
         <!-- UNIT CONVERTER -->
 
         <div class="tool-card">
+
 
             <h3>
                 🔄 تحويل الوحدات
@@ -856,27 +890,34 @@
 
             <select id="unit-type">
 
+
                 <option value="km-m">
                     كيلومتر → متر
                 </option>
+
 
                 <option value="m-km">
                     متر → كيلومتر
                 </option>
 
+
                 <option value="kg-g">
                     كيلوجرام → جرام
                 </option>
+
 
                 <option value="g-kg">
                     جرام → كيلوجرام
                 </option>
 
+
             </select>
 
 
             <button onclick="convertUnit()">
+
                 تحويل
+
             </button>
 
 
@@ -885,6 +926,7 @@
                 class="result"
             ></div>
 
+
         </div>
 
 
@@ -892,6 +934,7 @@
         <!-- SUMMARIZER -->
 
         <div class="tool-card featured-tool">
+
 
             <h3>
                 📝 تلخيص الدروس
@@ -904,16 +947,22 @@
 
 
             <button onclick="openSummarizer()">
+
                 افتح أداة التلخيص
+
             </button>
+
 
         </div>
 
 
 
-        <!-- TRANSLATOR -->
+        <!-- =====================================================
+             NEW TRANSLATOR TOOL
+        ====================================================== -->
 
         <div class="tool-card featured-tool">
+
 
             <h3>
                 🌐 مترجم DIABLO
@@ -933,39 +982,49 @@
 
             <select id="translator-language">
 
+
                 <option value="en">
                     🇬🇧 الإنجليزية
                 </option>
+
 
                 <option value="fr">
                     🇫🇷 الفرنسية
                 </option>
 
+
                 <option value="de">
                     🇩🇪 الألمانية
                 </option>
+
 
                 <option value="es">
                     🇪🇸 الإسبانية
                 </option>
 
+
                 <option value="it">
                     🇮🇹 الإيطالية
                 </option>
+
 
                 <option value="tr">
                     🇹🇷 التركية
                 </option>
 
+
                 <option value="ar">
                     🇪🇬 العربية
                 </option>
+
 
             </select>
 
 
             <button onclick="translateText()">
+
                 🌐 ترجمة
+
             </button>
 
 
@@ -974,13 +1033,17 @@
                 class="result"
             ></div>
 
+
         </div>
 
 
 
-        <!-- QR CODE -->
+        <!-- =====================================================
+             NEW QR CODE TOOL
+        ====================================================== -->
 
         <div class="tool-card featured-tool">
+
 
             <h3>
                 📱 مولّد QR Code
@@ -1000,7 +1063,9 @@
 
 
             <button onclick="generateQRCode()">
+
                 📱 إنشاء QR Code
+
             </button>
 
 
@@ -1009,6 +1074,7 @@
                 class="qr-result"
             ></div>
 
+
         </div>
 
 
@@ -1016,6 +1082,90 @@
 
 </section>
 
+
+
+
+<!-- =========================================================
+     DIABLO SMART STUDY HUB — ADDITIVE UPDATE
+========================================================= -->
+<section id="smart-study" class="section diablo-additions">
+  <div class="section-title">
+    <span>🚀 DIABLO PLUS</span>
+    <h2>مركز المذاكرة الذكي</h2>
+    <p>أدوات جديدة للمراجعة والتخطيط ومتابعة التقدم، مع الحفاظ على أدوات DIABLO الحالية.</p>
+  </div>
+
+  <div class="tools-grid">
+    <article class="tool-card featured-tool">
+      <h3>📄 شرح ملف أو صورة</h3>
+      <p>ارفع PDF أو صورة لصفحة من الكتاب لاستخراج النص ثم تلخيصه باستخدام Diablo AI.</p>
+      <label for="study-file">اختار ملف PDF أو صورة</label>
+      <input id="study-file" type="file" accept="application/pdf,image/*,.txt">
+      <button class="main-btn" type="button" onclick="processStudyFile()">استخراج المحتوى وتلخيصه</button>
+      <div id="study-file-status" class="result" aria-live="polite"></div>
+      <div id="study-file-result" class="result" aria-live="polite"></div>
+    </article>
+
+    <article class="tool-card featured-tool">
+      <h3>🧠 امتحان ذكي</h3>
+      <p>اكتب اسم الدرس أو الصق محتواه عشان DIABLO ينشئ اختبارًا مع الإجابات والتفسير.</p>
+      <input id="quiz-topic" type="text" placeholder="اسم المادة أو الدرس">
+      <textarea id="quiz-source" rows="4" placeholder="الصق محتوى الدرس هنا (اختياري لكنه أدق)..."></textarea>
+      <button class="main-btn" type="button" onclick="generateLessonQuiz()">إنشاء امتحان</button>
+      <div id="quiz-result" class="result" aria-live="polite"></div>
+    </article>
+
+    <article class="tool-card featured-tool">
+      <h3>🗓️ خطة مذاكرة مخصصة</h3>
+      <label for="plan-subjects">المواد والدروس</label>
+      <textarea id="plan-subjects" rows="3" placeholder="مثال: رياضيات: فصل 1، علوم: الوحدة 2، عربي: نحو"></textarea>
+      <div class="study-plan-fields">
+        <label>عدد الأيام <input id="plan-days" type="number" min="1" max="90" value="7"></label>
+        <label>ساعات المذاكرة يوميًا <input id="plan-hours" type="number" min="1" max="12" value="3"></label>
+      </div>
+      <button class="main-btn" type="button" onclick="createSmartStudyPlan()">إنشاء الخطة</button>
+      <div id="smart-plan-result" class="result" aria-live="polite"></div>
+    </article>
+
+    <article class="tool-card featured-tool">
+      <h3>📈 سجل الإنجاز</h3>
+      <p>علّم على المهام اللي خلصتها؛ التقدم والنقاط بيتحفظوا على نفس الجهاز.</p>
+      <div class="progress-task-list">
+        <label><input type="checkbox" class="diablo-task" value="lesson"> خلصت درسًا</label>
+        <label><input type="checkbox" class="diablo-task" value="review"> راجعت درسًا</label>
+        <label><input type="checkbox" class="diablo-task" value="quiz"> حليت اختبارًا</label>
+        <label><input type="checkbox" class="diablo-task" value="plan"> التزمت بخطة المذاكرة</label>
+      </div>
+      <div class="progress-track"><span id="progress-fill"></span></div>
+      <p id="progress-summary" class="progress-summary" aria-live="polite">إنجازك: 0%</p>
+      <div id="achievement-badges" class="achievement-badges" aria-live="polite"></div>
+      <button type="button" class="secondary-btn" onclick="resetStudyProgress()">إعادة ضبط سجل الإنجاز</button>
+    </article>
+  </div>
+</section>
+
+<!-- FOUNDER PROFILE -->
+<section id="founder" class="section founder-section">
+  <div class="section-title">
+    <span>👨‍💻 وراء DIABLO</span>
+    <h2>مؤسس المنصة</h2>
+    <p>فكرة بدأت من شغف بالتعلم والبرمجة، وهدفها تقديم أدوات مفيدة للطلاب.</p>
+  </div>
+  <article class="founder-card">
+    <div class="founder-avatar">
+      <img src="founder-photo.jpg" alt="إبراهيم عبدالله علي، مؤسس منصة DIABLO" loading="lazy">
+    </div>
+    <div class="founder-copy">
+      <p class="founder-kicker">المؤسس والمطوّر</p>
+      <h3>إبراهيم عبدالله علي</h3>
+      <p>طالب من محافظة الفيوم، مهتم بالبرمجة وتطوير المواقع، وبيطمح للتخصص في <strong>الأمن السيبراني</strong>.</p>
+      <div class="founder-tags"><span>💻 البرمجة</span><span>🛠️ تطوير المواقع</span><span>🔐 الأمن السيبراني</span></div>
+      <h4>ليه أنشأت DIABLO؟</h4>
+      <p>علشان أساعد الطلاب بأدوات تعليمية في مكان واحد، وأطوّر مهاراتي من خلال تجربة بناء منصة حقيقية، وأشارك شغلي مع الناس.</p>
+      
+    </div>
+  </article>
+</section>
 
 
 <!-- =========================================================
@@ -1050,7 +1200,9 @@
                 class="main-btn"
                 onclick="openAI()"
             >
+
                 ابدأ مع Diablo AI
+
             </button>
 
 
@@ -1058,7 +1210,9 @@
                 class="secondary-btn"
                 onclick="openSummarizer()"
             >
+
                 📝 لخص درس
+
             </button>
 
 
@@ -1118,7 +1272,9 @@
             class="close-btn"
             onclick="closeAI()"
         >
+
             ×
+
         </button>
 
 
@@ -1137,6 +1293,14 @@
         </p>
 
 
+        <label for="ai-mode" class="ai-mode-label">اختار طريقة المساعدة</label>
+        <select id="ai-mode" class="ai-mode-select">
+            <option value="explain">اشرحلي ببساطة</option>
+            <option value="steps">حل معايا خطوة بخطوة</option>
+            <option value="quiz">اختبرني</option>
+            <option value="review">راجع إجابتي</option>
+        </select>
+
         <textarea
             id="ai-question"
             placeholder="مثال: اشرح لي قانون في الرياضيات..."
@@ -1147,7 +1311,9 @@
             onclick="askAI()"
             class="main-btn"
         >
+
             اسأل Diablo AI 🚀
+
         </button>
 
 
@@ -1183,7 +1349,9 @@
             class="close-btn"
             onclick="closeSummarizer()"
         >
+
             ×
+
         </button>
 
 
@@ -1210,7 +1378,9 @@
                 class="summary-tab active"
                 onclick="switchSummaryMode('text', this)"
             >
+
                 📝 نص
+
             </button>
 
 
@@ -1218,7 +1388,9 @@
                 class="summary-tab"
                 onclick="switchSummaryMode('voice', this)"
             >
+
                 🎙️ تسجيل
+
             </button>
 
 
@@ -1242,7 +1414,9 @@
                 class="main-btn"
                 onclick="summarizeText()"
             >
+
                 ✨ لخص الدرس
+
             </button>
 
 
@@ -1260,7 +1434,9 @@
                 class="voice-status"
                 id="voice-status"
             >
+
                 اضغط بدء التسجيل وابدأ شرح الدرس.
+
             </p>
 
 
@@ -1273,7 +1449,9 @@
                     id="start-recording-btn"
                     onclick="startRecording()"
                 >
+
                     🎙️ بدء التسجيل
+
                 </button>
 
 
@@ -1283,7 +1461,9 @@
                     onclick="stopRecording()"
                     disabled
                 >
+
                     ⏹️ إيقاف
+
                 </button>
 
 
@@ -1295,7 +1475,9 @@
                 class="recording-time"
                 id="recording-time"
             >
+
                 00:00
+
             </div>
 
 
@@ -1322,14 +1504,18 @@
                 class="main-btn"
                 onclick="summarizeVoiceTranscript()"
             >
+
                 ✨ لخص التسجيل
+
             </button>
 
 
 
             <small class="browser-note">
+
                 التسجيل الصوتي يعتمد على دعم المتصفح للتعرف على الكلام.
                 لو التعرف غير متاح، اكتب أو الصق التفريغ النصي يدويًا.
+
             </small>
 
 
@@ -1352,8 +1538,10 @@
 
 <!-- =========================================================
      QR CODE LIBRARY
-     يجب تحميل المكتبة قبل script.js
 ========================================================= -->
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.0.4/tesseract.min.js"></script>
 
 <script
     src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"
