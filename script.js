@@ -8,6 +8,7 @@ CONFIG
 
 const DIABLO_AI_URL =
 "https://lucky-mountain-88cbdiablo-ai.ibrahimweka14.workers.dev/chat";
+const DIABLO_TRANSCRIBE_URL = DIABLO_AI_URL.replace(/\/chat$/, "/transcribe");
 
 /*
 المكتبة الإلكترونية الرسمية لوزارة التربية والتعليم.
@@ -16,6 +17,10 @@ const OFFICIAL_BOOKS_URL =
 "https://ellibrary.moe.gov.eg/books/";
 
 let aiMessages = [];
+let aiSelectedImageDataUrl = "";
+let aiSelectedImageName = "";
+let aiCameraStream = null;
+let aiCameraFacingMode = "environment";
 
 /* =========================================================
 GENERAL HELPERS
@@ -38,6 +43,157 @@ function setModalState(open) {
         open
     );
 
+}
+
+
+/* =========================
+   AI IMAGE / CAMERA INPUT
+========================= */
+function handleAIImageSelection(input) {
+    const file = input && input.files && input.files[0];
+    const preview = document.getElementById("ai-image-preview");
+    const removeButton = document.getElementById("ai-image-remove");
+    if (!file || !preview) return;
+    if (!file.type || !file.type.startsWith("image/")) {
+        preview.textContent = "اختار ملف صورة من فضلك.";
+        input.value = "";
+        return;
+    }
+    if (file.size > 12 * 1024 * 1024) {
+        preview.textContent = "حجم الصورة كبير. اختار صورة أقل من 12 ميجابايت.";
+        input.value = "";
+        return;
+    }
+    const reader = new FileReader();
+    reader.onload = function() {
+        const image = new Image();
+        image.onload = function() {
+            const maxSide = 1600;
+            const scale = Math.min(1, maxSide / Math.max(image.width, image.height));
+            const canvas = document.createElement("canvas");
+            canvas.width = Math.max(1, Math.round(image.width * scale));
+            canvas.height = Math.max(1, Math.round(image.height * scale));
+            const ctx = canvas.getContext("2d");
+            ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+            aiSelectedImageDataUrl = canvas.toDataURL("image/jpeg", 0.82);
+            aiSelectedImageName = file.name;
+            preview.innerHTML = "";
+            const thumb = document.createElement("img");
+            thumb.src = aiSelectedImageDataUrl;
+            thumb.alt = "معاينة الصورة المضافة";
+            const label = document.createElement("span");
+            label.textContent = "تم اختيار الصورة: " + file.name;
+            preview.append(thumb, label);
+            if (removeButton) removeButton.classList.remove("hidden");
+        };
+        image.onerror = function() { preview.textContent = "تعذر قراءة الصورة. جرّب صورة تانية."; };
+        image.src = reader.result;
+    };
+    reader.onerror = function() { preview.textContent = "تعذر تحميل الصورة من الجهاز."; };
+    reader.readAsDataURL(file);
+}
+
+async function openAICamera() {
+    const modal = document.getElementById("ai-camera-modal");
+    const video = document.getElementById("ai-camera-video");
+    const status = document.getElementById("ai-camera-status");
+    if (!modal || !video || !status) return;
+    modal.hidden = false;
+    modal.style.display = "flex";
+    document.body.classList.add("modal-open");
+    status.textContent = "جاري فتح الكاميرا… وافق على طلب الإذن لو ظهر.";
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        status.textContent = "المتصفح لا يدعم فتح الكاميرا مباشرة. افتح الموقع عبر HTTPS وبمتصفح حديث، أو استخدم إضافة صورة.";
+        return;
+    }
+    try {
+        stopAICameraStream();
+        aiCameraStream = await navigator.mediaDevices.getUserMedia({
+            audio: false,
+            video: { facingMode: { ideal: aiCameraFacingMode }, width: { ideal: 1280 }, height: { ideal: 720 } }
+        });
+        video.srcObject = aiCameraStream;
+        await new Promise((resolve, reject) => {
+            if (video.readyState >= 2 && video.videoWidth) return resolve();
+            const timer = setTimeout(() => reject(new Error("الكاميرا اتفتحت لكن الصورة لسه ما ظهرتش. اقفل أي تطبيق بيستخدمها وجرب تاني.")), 8000);
+            video.onloadedmetadata = () => { clearTimeout(timer); video.play().then(resolve).catch(reject); };
+        });
+        status.textContent = "الكاميرا جاهزة. وجّهها للسؤال واضغط «التقاط الصورة».";
+    } catch (error) {
+        console.error("DIABLO camera error:", error);
+        const messages = {
+            NotAllowedError: "إذن الكاميرا مرفوض. اسمح للمتصفح باستخدام الكاميرا من إعدادات الموقع ثم جرّب تاني.",
+            NotFoundError: "مش لاقي كاميرا متصلة بالجهاز.",
+            NotReadableError: "الكاميرا مستخدمة في تطبيق تاني أو تعذر تشغيلها.",
+            OverconstrainedError: "الكاميرا مش قادرة تحقق الإعدادات المطلوبة. جرّب تاني."
+        };
+        status.textContent = messages[error.name] || "تعذر فتح الكاميرا. تأكد من الإذن وأن الموقع يعمل عبر HTTPS، أو استخدم إضافة صورة.";
+    }
+}
+
+function stopAICameraStream() {
+    if (aiCameraStream) {
+        aiCameraStream.getTracks().forEach(track => track.stop());
+        aiCameraStream = null;
+    }
+    const video = document.getElementById("ai-camera-video");
+    if (video) video.srcObject = null;
+}
+
+function closeAICamera() {
+    stopAICameraStream();
+    const modal = document.getElementById("ai-camera-modal");
+    if (modal) { modal.hidden = true; modal.style.display = "none"; }
+    if (!document.getElementById("ai-modal")?.classList.contains("show") &&
+        !document.getElementById("summarizer-modal")?.classList.contains("show")) {
+        document.body.classList.remove("modal-open");
+    }
+}
+
+async function switchAICamera() {
+    aiCameraFacingMode = aiCameraFacingMode === "environment" ? "user" : "environment";
+    await openAICamera();
+}
+
+function captureAICameraPhoto() {
+    const video = document.getElementById("ai-camera-video");
+    const preview = document.getElementById("ai-image-preview");
+    const removeButton = document.getElementById("ai-image-remove");
+    const status = document.getElementById("ai-camera-status");
+    if (!video || !video.videoWidth || !video.videoHeight) {
+        if (status) status.textContent = "استنى لحد ما صورة الكاميرا تظهر، وبعدها جرّب تاني.";
+        return;
+    }
+    const maxSide = 1600;
+    const scale = Math.min(1, maxSide / Math.max(video.videoWidth, video.videoHeight));
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.max(1, Math.round(video.videoWidth * scale));
+    canvas.height = Math.max(1, Math.round(video.videoHeight * scale));
+    const context = canvas.getContext("2d");
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    aiSelectedImageDataUrl = canvas.toDataURL("image/jpeg", 0.84);
+    aiSelectedImageName = "diablo-camera-photo.jpg";
+    if (preview) {
+        preview.innerHTML = "";
+        const img = document.createElement("img");
+        img.src = aiSelectedImageDataUrl;
+        img.alt = "معاينة الصورة الملتقطة بالكاميرا";
+        const label = document.createElement("span");
+        label.textContent = "تم التقاط الصورة من الكاميرا";
+        preview.append(img, label);
+    }
+    if (removeButton) removeButton.classList.remove("hidden");
+    closeAICamera();
+}
+
+function removeAIImage() {
+    aiSelectedImageDataUrl = "";
+    aiSelectedImageName = "";
+    const preview = document.getElementById("ai-image-preview");
+    const removeButton = document.getElementById("ai-image-remove");
+    ["ai-image-input"].forEach(id => { const el = document.getElementById(id); if (el) el.value = ""; });
+    if (preview) preview.innerHTML = "";
+    if (removeButton) removeButton.classList.add("hidden");
 }
 
 /* =========================================================
@@ -105,25 +261,20 @@ async function askAI() {
     const rawQuestion =
         input.value.trim();
 
-    const modeSelect = document.getElementById("ai-mode");
-    const modePrompts = {
-        explain: "اشرح المطلوب للطالب بلغة عربية بسيطة ومناسبة لمرحلته، مع مثال عند الحاجة. ",
-        steps: "ساعد الطالب على الحل خطوة بخطوة، ووضح سبب كل خطوة بدل إعطاء النتيجة فقط. ",
-        quiz: "حوّل الموضوع إلى اختبار تفاعلي قصير، اسأل سؤالًا واحدًا في كل مرة وانتظر إجابة الطالب. ",
-        review: "راجع إجابة الطالب بدقة، وحدد الصحيح والخطأ واشرح التصحيح باحترام. "
-    };
-    const mode = modeSelect ? modeSelect.value : "explain";
-    const question = rawQuestion ? ((modePrompts[mode] || "") + rawQuestion) : "";
+       const question = rawQuestion;
 
-    if (!question) {
-
+    if (!question && !aiSelectedImageDataUrl) {
         answer.style.display = "block";
-
-        answer.textContent =
-            "اكتب سؤالك الأول عشان Diablo AI يقدر يساعدك.";
-
+        answer.textContent = "اكتب سؤالك أو أضف صورة عشان Diablo AI يقدر يساعدك.";
         return;
     }
+
+    const userContent = aiSelectedImageDataUrl
+        ? [
+            { type: "text", text: (question || "حلل الصورة واشرح محتواها بالتفصيل المناسب للطالب.") + "\nلو الصورة فيها سؤال دراسي، اقرأه واشرح الحل خطوة بخطوة." },
+            { type: "image_url", image_url: { url: aiSelectedImageDataUrl, detail: "high" } }
+          ]
+        : question;
 
     answer.style.display = "block";
 
@@ -135,9 +286,7 @@ async function askAI() {
     aiMessages.push({
 
         role: "user",
-
-        content: question
-
+        content: userContent
     });
 
     try {
@@ -185,8 +334,9 @@ async function askAI() {
                 data?.error ||
 
                 data?.message ||
-
-                "حدث خطأ في Diablo AI."
+                (aiSelectedImageDataUrl
+                    ? "لم يستطع خادم الذكاء الاصطناعي معالجة الصورة. قد يحتاج الـ Worker إلى دعم نموذج يقبل الصور؛ جرّب سؤالًا نصيًا أو تواصل مع المطوّر لتحديث الخادم."
+                    : "حدث خطأ في Diablo AI.")
 
             );
 
@@ -213,14 +363,19 @@ async function askAI() {
         });
 
         answer.innerHTML =
-
             "<strong>🤖 Diablo AI</strong>" +
             "<br><br>" +
-
-            escapeHTML(text)
-                .replace(/\n/g, "<br>");
+            escapeHTML(text).replace(/\n/g, "<br>");
 
         input.value = "";
+        // Do not keep large base64 image payloads in conversation history.
+        if (aiSelectedImageDataUrl) {
+            const lastUserMessage = aiMessages[aiMessages.length - 2];
+            if (lastUserMessage && lastUserMessage.role === "user") {
+                lastUserMessage.content = (question || "سؤال عن صورة") + " [تم إرفاق صورة في الرسالة السابقة]";
+            }
+            removeAIImage();
+        }
 
     } catch (error) {
 
@@ -3042,13 +3197,7 @@ async function startRecording() {
         return;
     }
 
-    if (!speechRecognitionSupported) {
-
-        status.textContent =
-            "⚠️ المتصفح لا يدعم تحويل الكلام إلى نص. جرّب Google Chrome على Android.";
-
-        return;
-    }
+    const canTranscribeInBrowser = speechRecognitionSupported;
 
     startButton.disabled = true;
 
@@ -3115,16 +3264,41 @@ async function startRecording() {
 
             };
 
-        mediaRecorder.onstop =
-            function() {
-
-                stream
-                    .getTracks()
-                    .forEach(
-                        track => track.stop()
-                    );
-
-            };
+        const activeRecorder = mediaRecorder;
+        mediaRecorder.onstop = async function() {
+            stream.getTracks().forEach(track => track.stop());
+            // If browser speech recognition produced no text, ask the secure Worker to transcribe the saved recording.
+            const transcriptBox = document.getElementById("voice-transcript");
+            if (!transcriptBox || transcriptBox.value.trim() || !recordedChunks.length) return;
+            const blob = new Blob(recordedChunks, { type: activeRecorder?.mimeType || recordedChunks[0]?.type || "audio/webm" });
+            if (blob.size > 20 * 1024 * 1024) {
+                const voiceStatus = document.getElementById("voice-status");
+                if (voiceStatus) voiceStatus.textContent = "التسجيل أكبر من 20 ميجابايت. قصّر التسجيل ثم حاول مرة أخرى.";
+                return;
+            }
+            const voiceStatus = document.getElementById("voice-status");
+            if (voiceStatus) voiceStatus.textContent = "⏳ التسجيل اتحفظ. جاري تحويله لنص…";
+            try {
+                const dataUrl = await new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = () => resolve(String(reader.result || ""));
+                    reader.onerror = () => reject(new Error("تعذر قراءة التسجيل من الجهاز."));
+                    reader.readAsDataURL(blob);
+                });
+                const response = await fetch(DIABLO_TRANSCRIBE_URL, {
+                    method: "POST", headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ audioBase64: dataUrl, mimeType: blob.type || "audio/webm" })
+                });
+                const result = await response.json().catch(() => ({}));
+                if (!response.ok || !result.text) throw new Error(result.error || "خدمة تحويل الصوت لنص غير جاهزة.");
+                transcriptBox.value = [transcriptBox.value.trim(), result.text.trim()].filter(Boolean).join("\n");
+                transcriptBox.dispatchEvent(new Event("input", { bubbles: true }));
+                if (voiceStatus) voiceStatus.textContent = "✅ تم تحويل التسجيل لنص. تقدر دلوقتي تلخّص الدرس.";
+            } catch (error) {
+                console.error("DIABLO transcription error", error);
+                if (voiceStatus) voiceStatus.textContent = "⚠️ " + (error?.message || "تعذر تحويل التسجيل لنص.") + " تقدر تكتب النص يدويًا أو تراجع إعدادات خادم DIABLO.";
+            }
+        };
 
         mediaRecorder.start(250);
 
@@ -3136,10 +3310,13 @@ async function startRecording() {
 
         startRecordingTimer();
 
-        status.textContent =
-            "🔴 التسجيل شغال... اتكلم براحتك.";
+        status.textContent = canTranscribeInBrowser
+            ? "🔴 التسجيل شغال... اتكلم براحتك، والكلام المفروض يظهر في مربع النص."
+            : "🔴 التسجيل شغال، لكن المتصفح لا يدعم تحويل الصوت لنص. جرّب Chrome أو اكتب التفريغ يدويًا قبل التلخيص.";
 
-        startSpeechRecognition();
+        if (canTranscribeInBrowser) {
+            startSpeechRecognition();
+        }
 
     } catch (error) {
 
@@ -3263,8 +3440,9 @@ function stopRecording() {
 
         } else {
 
-            status.textContent =
-                "⏹️ التسجيل انتهى، لكن مفيش نص اتعرف عليه. جرّب تتكلم قريب من الميكروفون.";
+            status.textContent = !speechRecognitionSupported
+                ? "⏹️ التسجيل انتهى، لكن المتصفح لا يدعم تحويل الكلام إلى نص. افتح الموقع في Chrome محدّث، أو اكتب التفريغ يدويًا ثم اضغط لخص التسجيل."
+                : "⏹️ التسجيل انتهى، لكن مفيش نص اتعرف عليه. اتأكد من إذن الميكروفون والإنترنت، وجرّب Chrome محدّث أو اكتب التفريغ يدويًا.";
 
         }
 
@@ -3363,6 +3541,11 @@ function startSpeechRecognition() {
         }
 
     }
+
+    speechRecognition.onstart = function() {
+        const status = document.getElementById("voice-status");
+        if (status && isRecording) status.textContent = "🎙️ بسمع كلامك دلوقتي... لو الكلام مش بيظهر، اتأكد من الإنترنت وإذن الميكروفون.";
+    };
 
     speechRecognition.onresult =
         function(event) {
@@ -3508,6 +3691,12 @@ function startSpeechRecognition() {
 
                 }
 
+                return;
+            }
+
+            if (event.error === "service-not-allowed" || event.error === "language-not-supported") {
+                if (status) status.textContent = "⚠️ خدمة تحويل الكلام لنص غير متاحة في المتصفح أو اللغة الحالية. جرّب Chrome محدّث، أو اكتب النص يدويًا. التسجيل الصوتي وحده لا يحوّل الكلام لنص تلقائيًا.";
+                shouldRestartSpeechRecognition = false;
                 return;
             }
 
@@ -4020,3 +4209,186 @@ function generateQRCode() {
 }
 
 document.addEventListener("DOMContentLoaded", renderStudyProgress);
+
+
+/* DIABLO AI chat workspace controller — UI/history layer */
+let diabloCurrentChatId = null;
+let diabloChatStore = [];
+let diabloSending = false;
+function diabloLoadChats(){try{const v=JSON.parse(localStorage.getItem('diablo_ai_chats_v2')||'[]');diabloChatStore=Array.isArray(v)?v:[]}catch{diabloChatStore=[]}renderDiabloHistory();}
+function diabloSaveChats(){try{localStorage.setItem('diablo_ai_chats_v2',JSON.stringify(diabloChatStore.slice(0,50)))}catch(e){console.warn('Could not save DIABLO chats locally',e)}renderDiabloHistory();}
+function diabloCurrentChat(){return diabloChatStore.find(c=>c.id===diabloCurrentChatId)||null;}
+function startNewDiabloChat(){diabloCurrentChatId='d'+Date.now();diabloChatStore.unshift({id:diabloCurrentChatId,title:'محادثة جديدة',messages:[],updatedAt:Date.now()});aiMessages=[];renderDiabloChat();diabloSaveChats();document.getElementById('ai-question')?.focus();document.getElementById('diablo-sidebar')?.classList.remove('open');}
+function renderDiabloHistory(){const list=document.getElementById('diablo-history-list');if(!list)return;list.innerHTML='';diabloChatStore.slice().sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0)).forEach(c=>{const b=document.createElement('button');b.className='diablo-history-item'+(c.id===diabloCurrentChatId?' active':'');b.innerHTML='<span></span><small>›</small>';b.querySelector('span').textContent=c.title||'محادثة جديدة';b.onclick=()=>loadDiabloChat(c.id);list.appendChild(b)});if(!list.children.length){const p=document.createElement('div');p.style.cssText='padding:12px;color:#7f8798;font-size:12px';p.textContent='لسه مفيش محادثات محفوظة.';list.appendChild(p)}}
+function loadDiabloChat(id){const c=diabloChatStore.find(x=>x.id===id);if(!c)return;diabloCurrentChatId=id;aiMessages=(c.messages||[]).map(m=>({role:m.role,content:m.image?[{type:'text',text:String(m.content||m.displayText||'حلل الصورة المرفقة.')},{type:'image_url',image_url:{url:m.image,detail:'high'}}]:m.content}));renderDiabloChat();renderDiabloHistory();document.getElementById('diablo-sidebar')?.classList.remove('open');}
+function clearDiabloHistory(){if(!confirm('تمسح كل المحادثات المحفوظة على الجهاز ده؟'))return;diabloChatStore=[];aiMessages=[];diabloCurrentChatId=null;try{localStorage.removeItem('diablo_ai_chats_v2')}catch{}renderDiabloChat();renderDiabloHistory();}
+function toggleDiabloSidebar(){document.getElementById('diablo-sidebar')?.classList.toggle('open')}
+function useDiabloPrompt(t){const i=document.getElementById('ai-question');if(i){i.value=t;i.focus();i.setSelectionRange(i.value.length,i.value.length)}}
+function renderDiabloChat(){const box=document.getElementById('diablo-chat-messages');const welcome=document.getElementById('diablo-welcome');if(!box)return;const c=diabloCurrentChat();const msgs=c?.messages||[];box.innerHTML='';if(welcome)welcome.style.display=msgs.length?'none':'block';msgs.forEach(m=>appendDiabloMessage(m.role,m.displayText||((typeof m.content==='string')?m.content:''),m.image||''));const sc=document.getElementById('diablo-chat-scroll');if(sc)sc.scrollTop=sc.scrollHeight;renderDiabloHistory();}
+function appendDiabloMessage(role,text,image=''){const box=document.getElementById('diablo-chat-messages');if(!box)return;const row=document.createElement('div');row.className='diablo-message '+(role==='assistant'?'assistant':'user');const avatar=document.createElement('div');avatar.className='diablo-message-avatar';avatar.textContent=role==='assistant'?'D':'أنت';const body=document.createElement('div');body.className='diablo-message-body';body.textContent=text||'';if(image){const im=document.createElement('img');im.src=image;im.alt='الصورة المرفقة';body.appendChild(im)}row.append(avatar,body);box.appendChild(row);const w=document.getElementById('diablo-welcome');if(w)w.style.display='none';const sc=document.getElementById('diablo-chat-scroll');if(sc)sc.scrollTop=sc.scrollHeight;return body;}
+window.openAI=function(){const modal=document.getElementById('ai-modal');if(!modal)return;modal.classList.add('show');modal.setAttribute('aria-hidden','false');document.body.classList.add('modal-open');diabloLoadChats();if(!diabloCurrentChatId||!diabloCurrentChat())startNewDiabloChat();else renderDiabloChat();setTimeout(()=>document.getElementById('ai-question')?.focus(),120)};
+window.closeAI=function(){const modal=document.getElementById('ai-modal');if(modal){modal.classList.remove('show');modal.setAttribute('aria-hidden','true')}if(!document.getElementById('summarizer-modal')?.classList.contains('show'))document.body.classList.remove('modal-open');document.getElementById('diablo-sidebar')?.classList.remove('open')};
+window.openDiabloPlus=function(){const p=document.getElementById('diablo-plus-modal');if(p)p.hidden=false};window.closeDiabloPlus=function(){const p=document.getElementById('diablo-plus-modal');if(p)p.hidden=true};
+window.selectDiabloPlan=function(name,price){const d=document.getElementById('diablo-payment-details');if(!d)return;d.hidden=false;d.textContent='اخترت باقة '+name+' بسعر '+price+' جنيه. الدفع والتفعيل التلقائي لم يتم ربطهما بعد. لا تحوّل أموالًا الآن؛ تواصل مع الإدارة عبر واتساب لتأكيد طريقة الدفع الرسمية، ولا يتم تفعيل الاشتراك إلا بعد التحقق من الدفع.';d.scrollIntoView({behavior:'smooth',block:'nearest'})};
+window.askAI=async function(){
+ if(diabloSending)return;
+ const input=document.getElementById('ai-question');
+ const raw=(input?.value||'').trim();
+ const image=aiSelectedImageDataUrl;
+ if(!raw&&!image){input?.focus();return}
+ if(!diabloCurrentChatId||!diabloCurrentChat())startNewDiabloChat();
+ const c=diabloCurrentChat();
+ const visibleText=raw||(image?'📷 صورة مرفقة — اقرأ الصورة وأجب عن محتواها.':'');
+ const promptText=raw || 'اقرأ الصورة المرفقة بعناية. استخرج النص الظاهر فيها، وإذا كانت تحتوي على سؤال فأجب عنه بوضوح.';
+ const userContent=image?[{type:'text',text:promptText},{type:'image_url',image_url:{url:image,detail:'high'}}]:promptText;
+ c.messages.push({role:'user',content:promptText,displayText:visibleText,image:image||'',updatedAt:Date.now()});
+ if(c.messages.length===1)c.title=(raw||'صورة مرفقة').slice(0,42);
+ c.updatedAt=Date.now();
+ aiMessages.push({role:'user',content:userContent});
+ appendDiabloMessage('user',visibleText,image||'');
+ if(input)input.value='';
+ const typing=document.getElementById('diablo-typing');
+ const send=document.getElementById('diablo-send-btn');
+ diabloSending=true;if(typing)typing.hidden=false;if(send)send.disabled=true;
+ try{
+  const requestMessages=aiMessages.slice(-12).map((m,index,arr)=>{
+   if(index===arr.length-1 || !Array.isArray(m.content))return m;
+   const hasImage=m.content.some(part=>part?.type==='image_url'||part?.type==='input_image');
+   if(!hasImage)return m;
+   const summary=m.content.filter(part=>part?.type==='text'||part?.type==='input_text').map(part=>part.text||'').join('\n');
+   return {role:m.role,content:(summary||'صورة مرفقة في رسالة سابقة')+' [لم تتم إعادة إرسال الصورة السابقة]'};
+  });
+  const payload=JSON.stringify({messages:requestMessages});
+  if(payload.length>24*1024*1024)throw new Error('حجم المحادثة كبير جدًا. ابدأ محادثة جديدة أو أرسل صورة أصغر.');
+  const res=await fetch(DIABLO_AI_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:payload});
+  const data=await res.json().catch(()=>({}));
+  if(!res.ok)throw new Error(data?.error||data?.message||`فشل الخادم (HTTP ${res.status}).`);
+  const answer=extractAIText(data);if(!answer)throw new Error(data?.error||'الخادم لم يرجع إجابة مفهومة.');
+  aiMessages.push({role:'assistant',content:answer});
+  c.messages.push({role:'assistant',content:answer,displayText:answer,updatedAt:Date.now()});c.updatedAt=Date.now();
+  appendDiabloMessage('assistant',answer);diabloSaveChats();
+  if(image)removeAIImage();
+ }catch(err){
+  console.error('DIABLO AI request failed',err);
+  const msg='⚠️ '+(err?.message||'تعذر الاتصال بالخادم.');
+  c.messages.push({role:'assistant',content:msg,displayText:msg,updatedAt:Date.now()});appendDiabloMessage('assistant',msg);diabloSaveChats();
+  if(image){const p=document.getElementById('diablo-attachment-preview');if(p){p.classList.add('visible');p.textContent='الصورة ما زالت محفوظة. أصلح مشكلة الاتصال ثم اضغط إرسال مرة أخرى.'}}
+ }finally{diabloSending=false;if(typing)typing.hidden=true;if(send)send.disabled=false;input?.focus()}
+};
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(!document.getElementById('diablo-plus-modal')?.hidden)closeDiabloPlus();else if(document.getElementById('ai-modal')?.classList.contains('show'))closeAI()}if(e.key==='Enter'&&!e.shiftKey&&document.activeElement?.id==='ai-question'){e.preventDefault();askAI()}});
+window.handleAIImageSelection=function(input){
+ const file=input?.files?.[0];const preview=document.getElementById('diablo-attachment-preview');const remove=document.getElementById('ai-image-remove');
+ if(!file)return;
+ if(!file.type?.startsWith('image/')){if(preview){preview.textContent='اختار ملف صورة صالحًا.';preview.classList.add('visible')}input.value='';return}
+ if(file.size>15*1024*1024){if(preview){preview.textContent='حجم الصورة أكبر من 15 ميجابايت. اختار صورة أصغر.';preview.classList.add('visible')}input.value='';return}
+ if(preview){preview.innerHTML='جاري تجهيز الصورة…';preview.classList.add('visible')}
+ const reader=new FileReader();
+ reader.onerror=()=>{if(preview)preview.textContent='تعذر قراءة الصورة من الجهاز. جرّب صورة أخرى.'};
+ reader.onload=()=>{
+  const img=new Image();img.onerror=()=>{if(preview)preview.textContent='تعذر فتح الصورة. جرّب صيغة JPG أو PNG.'};
+  img.onload=()=>{try{
+   const maxSide=1800;const scale=Math.min(1,maxSide/Math.max(img.naturalWidth,img.naturalHeight));
+   const canvas=document.createElement('canvas');canvas.width=Math.max(1,Math.round(img.naturalWidth*scale));canvas.height=Math.max(1,Math.round(img.naturalHeight*scale));
+   const ctx=canvas.getContext('2d');if(!ctx)throw new Error('تعذر تجهيز الصورة.');ctx.fillStyle='#ffffff';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.drawImage(img,0,0,canvas.width,canvas.height);
+   let quality=.82;let dataUrl=canvas.toDataURL('image/jpeg',quality);
+   while(dataUrl.length>5*1024*1024&&quality>.5){quality-=.08;dataUrl=canvas.toDataURL('image/jpeg',quality)}
+   if(dataUrl.length>5*1024*1024)throw new Error('الصورة كبيرة جدًا بعد التجهيز. اختار صورة أصغر.');
+   aiSelectedImageDataUrl=dataUrl;aiSelectedImageName=file.name;
+   if(preview){preview.innerHTML='';const thumb=document.createElement('img');thumb.src=dataUrl;thumb.alt='معاينة الصورة المرفقة';const label=document.createElement('span');label.textContent='الصورة جاهزة للإرسال: '+file.name+' — اكتب سؤالك أو اضغط إرسال لتحليلها.';preview.append(thumb,label);preview.classList.add('visible')}
+   if(remove)remove.hidden=false;
+  }catch(err){console.error('DIABLO image preparation error',err);if(preview)preview.textContent=err.message||'حصلت مشكلة في تجهيز الصورة.'}
+  };img.src=String(reader.result||'');
+ };reader.readAsDataURL(file);input.value='';
+};
+const diabloOriginalRemoveImage=window.removeAIImage;window.removeAIImage=function(){if(typeof diabloOriginalRemoveImage==='function')diabloOriginalRemoveImage();aiSelectedImageDataUrl='';aiSelectedImageName='';const input=document.getElementById('ai-image-input');if(input)input.value='';const p=document.getElementById('diablo-attachment-preview');if(p){p.innerHTML='';p.classList.remove('visible')}const r=document.getElementById('ai-image-remove');if(r)r.hidden=true};
+
+window.captureAICameraPhoto=function(){
+ const video=document.getElementById('ai-camera-video');const status=document.getElementById('ai-camera-status');
+ if(!video||!video.videoWidth||!video.videoHeight){if(status)status.textContent='استنى لحد ما صورة الكاميرا تظهر، وبعدها جرّب تاني.';return}
+ try{
+  const maxSide=1800;const scale=Math.min(1,maxSide/Math.max(video.videoWidth,video.videoHeight));const canvas=document.createElement('canvas');canvas.width=Math.max(1,Math.round(video.videoWidth*scale));canvas.height=Math.max(1,Math.round(video.videoHeight*scale));
+  const ctx=canvas.getContext('2d');if(!ctx)throw new Error('تعذر التقاط الصورة.');ctx.drawImage(video,0,0,canvas.width,canvas.height);
+  aiSelectedImageDataUrl=canvas.toDataURL('image/jpeg',.82);aiSelectedImageName='diablo-camera-photo.jpg';
+  const p=document.getElementById('diablo-attachment-preview');if(p){p.innerHTML='';const im=document.createElement('img');im.src=aiSelectedImageDataUrl;im.alt='معاينة الصورة الملتقطة';const label=document.createElement('span');label.textContent='تم التقاط الصورة — اكتب سؤالك أو اضغط إرسال لتحليلها.';p.append(im,label);p.classList.add('visible')}
+  const r=document.getElementById('ai-image-remove');if(r)r.hidden=false;closeAICamera();document.getElementById('ai-question')?.focus();
+ }catch(err){console.error(err);if(status)status.textContent=err.message||'تعذر تجهيز صورة الكاميرا.'}
+};
+
+
+/* DIABLO Live Voice — WebRTC using a short-lived token minted by the Worker. */
+let diabloVoicePeer=null, diabloVoiceChannel=null, diabloVoiceMic=null, diabloVoiceConnected=false;
+const DIABLO_REALTIME_TOKEN_URL=DIABLO_AI_URL.replace(/\/chat\/?$/,'/realtime-token');
+window.startDiabloLiveVoice=function(){const modal=document.getElementById('diablo-live-voice-modal');if(modal)modal.hidden=false;const status=document.getElementById('diablo-live-voice-status');if(status)status.textContent='جاهز للاتصال. اضغط «بدء الاتصال» واسمح باستخدام الميكروفون.';};
+window.connectDiabloLiveVoice=async function(){
+ const status=document.getElementById('diablo-live-voice-status');const btn=document.getElementById('diablo-live-voice-start');
+ if(!navigator.mediaDevices?.getUserMedia||!window.RTCPeerConnection){if(status)status.textContent='المتصفح لا يدعم المحادثة الصوتية المباشرة. جرّب Chrome حديثًا عبر HTTPS.';return}
+ if(btn){btn.disabled=true;btn.textContent='جاري الاتصال…'}if(status)status.textContent='جاري تجهيز اتصال صوتي آمن…';
+ try{
+  const tokenRes=await fetch(DIABLO_REALTIME_TOKEN_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({})});
+  const tokenData=await tokenRes.json().catch(()=>({}));
+  if(!tokenRes.ok||!tokenData.value)throw new Error(tokenData.error||`تعذر تجهيز رمز الصوت (HTTP ${tokenRes.status}). افتح مسار /health للتأكد من نشر Worker الجديد، ثم راجع OPENAI_API_KEY وOPENAI_REALTIME_MODEL.`);
+  diabloVoicePeer=new RTCPeerConnection();
+  const remoteAudio=document.getElementById('diablo-live-voice-audio');
+  diabloVoicePeer.ontrack=event=>{if(remoteAudio){remoteAudio.srcObject=event.streams[0];remoteAudio.play().catch(()=>{})}};
+  diabloVoicePeer.onconnectionstatechange=()=>{if(['failed','disconnected','closed'].includes(diabloVoicePeer?.connectionState)&&status)status.textContent='انقطع الاتصال الصوتي. يمكنك إنهاء المكالمة والمحاولة مرة أخرى.'};
+  diabloVoiceChannel=diabloVoicePeer.createDataChannel('oai-events');
+  diabloVoiceChannel.onmessage=event=>{try{const data=JSON.parse(event.data);if(data.type==='error'){if(status)status.textContent='حصل خطأ في المحادثة الصوتية: '+(data.error?.message||'حاول مرة أخرى.')}else if(data.type==='input_audio_buffer.speech_started'){if(status)status.textContent='سمعتك… كمل كلامك.'}else if(data.type==='response.audio.delta'){if(status)status.textContent='DIABLO بيرد عليك صوتيًا…'}else if(data.type==='response.done'){if(status)status.textContent='اتفضل اتكلم، DIABLO بيسمعك.'}}catch{}};
+  diabloVoiceMic=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}});
+  diabloVoiceMic.getTracks().forEach(track=>diabloVoicePeer.addTrack(track,diabloVoiceMic));
+  const offer=await diabloVoicePeer.createOffer();await diabloVoicePeer.setLocalDescription(offer);
+  const sdpRes=await fetch('https://api.openai.com/v1/realtime/calls',{method:'POST',headers:{'Authorization':'Bearer '+tokenData.value,'Content-Type':'application/sdp'},body:offer.sdp});
+  const answerSdp=await sdpRes.text();if(!sdpRes.ok)throw new Error(`خدمة الصوت رفضت الاتصال (HTTP ${sdpRes.status}). ${answerSdp.slice(0,180)}`);
+  await diabloVoicePeer.setRemoteDescription({type:'answer',sdp:answerSdp});diabloVoiceConnected=true;
+  if(status)status.textContent='✅ متصل! اتكلم بشكل طبيعي، وDIABLO هيرد عليك بالصوت.';
+  if(btn){btn.textContent='متصل 🎙️';btn.disabled=false}
+ }catch(err){console.error('DIABLO realtime voice error',err);if(status)status.textContent='⚠️ '+(err?.message||'تعذر تشغيل المحادثة الصوتية.');cleanupDiabloVoice(false);if(btn){btn.textContent='إعادة المحاولة 🎙️';btn.disabled=false}}
+};
+function cleanupDiabloVoice(hide=true){try{diabloVoiceChannel?.close()}catch{}try{diabloVoicePeer?.close()}catch{}try{diabloVoiceMic?.getTracks().forEach(t=>t.stop())}catch{}diabloVoiceChannel=null;diabloVoicePeer=null;diabloVoiceMic=null;diabloVoiceConnected=false;const audio=document.getElementById('diablo-live-voice-audio');if(audio){audio.pause();audio.srcObject=null}const btn=document.getElementById('diablo-live-voice-start');if(btn){btn.disabled=false;btn.textContent='بدء الاتصال 🎙️'}if(hide){const modal=document.getElementById('diablo-live-voice-modal');if(modal)modal.hidden=true}}
+window.stopDiabloLiveVoice=function(){cleanupDiabloVoice(true)};
+
+/* DIABLO voice fallback: record one turn, transcribe, ask, then speak the reply. */
+let diabloFallbackRecorder=null, diabloFallbackChunks=[], diabloFallbackBusy=false;
+window.toggleDiabloFallbackRecording=async function(){
+ const btn=document.getElementById('diablo-fallback-voice-btn');
+ const status=document.getElementById('diablo-live-voice-status');
+ if(diabloFallbackBusy)return;
+ if(diabloFallbackRecorder&&diabloFallbackRecorder.state==='recording'){
+  if(btn)btn.disabled=true;
+  if(status)status.textContent='جاري تجهيز التسجيل وإرساله للتحويل إلى نص…';
+  diabloFallbackRecorder.stop();return;
+ }
+ if(!navigator.mediaDevices?.getUserMedia||!window.MediaRecorder){if(status)status.textContent='المتصفح لا يدعم التسجيل الصوتي. جرّب Chrome حديثًا على HTTPS.';return}
+ try{
+  const stream=await navigator.mediaDevices.getUserMedia({audio:true});
+  const preferred=['audio/webm;codecs=opus','audio/webm','audio/mp4'].find(t=>MediaRecorder.isTypeSupported?.(t));
+  diabloFallbackChunks=[];
+  diabloFallbackRecorder=new MediaRecorder(stream,preferred?{mimeType:preferred}:undefined);
+  diabloFallbackRecorder.ondataavailable=e=>{if(e.data&&e.data.size)diabloFallbackChunks.push(e.data)};
+  diabloFallbackRecorder.onerror=()=>{stream.getTracks().forEach(t=>t.stop());if(status)status.textContent='حصل خطأ أثناء التسجيل. جرّب مرة أخرى.';if(btn){btn.disabled=false;btn.textContent='تحدث واسمع الرد'}diabloFallbackRecorder=null};
+  diabloFallbackRecorder.onstop=async()=>{
+   stream.getTracks().forEach(t=>t.stop());
+   if(btn){btn.disabled=true;btn.textContent='جاري معالجة الصوت…'}
+   diabloFallbackBusy=true;
+   try{
+    const blob=new Blob(diabloFallbackChunks,{type:diabloFallbackRecorder?.mimeType||'audio/webm'});
+    diabloFallbackRecorder=null;diabloFallbackChunks=[];
+    if(!blob.size)throw new Error('التسجيل فارغ. اتكلم شوية ثم جرّب تاني.');
+    if(blob.size>20*1024*1024)throw new Error('التسجيل أكبر من 20 ميجابايت. قصّر التسجيل وحاول تاني.');
+    const dataUrl=await new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(String(r.result||''));r.onerror=()=>reject(new Error('تعذر قراءة التسجيل.'));r.readAsDataURL(blob)});
+    const comma=dataUrl.indexOf(',');const audioBase64=comma>=0?dataUrl.slice(comma+1):'';
+    const tr=await fetch(DIABLO_TRANSCRIBE_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({audioBase64,mimeType:blob.type||'audio/webm'})});
+    const td=await tr.json().catch(()=>({}));if(!tr.ok||!td.text)throw new Error(td.error||`فشل تحويل الصوت إلى نص (HTTP ${tr.status}).`);
+    if(status)status.textContent='سمعتك: «'+td.text.slice(0,180)+'» — جاري تجهيز الرد…';
+    const cr=await fetch(DIABLO_AI_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:[{role:'user',content:td.text}]})});
+    const cd=await cr.json().catch(()=>({}));if(!cr.ok)throw new Error(cd.error||`فشل الحصول على الرد (HTTP ${cr.status}).`);
+    const answer=extractAIText(cd);if(!answer)throw new Error('وصل رد فارغ من DIABLO AI.');
+    if(status)status.textContent='DIABLO AI: '+answer.slice(0,240);
+    if('speechSynthesis' in window){window.speechSynthesis.cancel();const utter=new SpeechSynthesisUtterance(answer);utter.lang='ar-EG';utter.rate=1;window.speechSynthesis.speak(utter)}
+   }catch(err){console.error('DIABLO fallback voice error',err);if(status)status.textContent='⚠️ '+(err?.message||'تعذر إكمال المحادثة الصوتية البديلة.');}
+   finally{diabloFallbackBusy=false;if(btn){btn.disabled=false;btn.textContent='تحدث واسمع الرد'}}
+  };
+  diabloFallbackRecorder.start();
+  if(btn)btn.textContent='إيقاف التسجيل وإرسال الصوت ■';
+  if(status)status.textContent='🎙️ بيسجل دلوقتي… اتكلم، وبعدها اضغط الزر نفسه لإرسال كلامك.';
+ }catch(err){console.error(err);if(status)status.textContent=err.name==='NotAllowedError'?'إذن الميكروفون مرفوض. اسمح باستخدامه من إعدادات الموقع.':(err.message||'تعذر تشغيل الميكروفون.');if(btn){btn.disabled=false;btn.textContent='تحدث واسمع الرد'}}
+};
