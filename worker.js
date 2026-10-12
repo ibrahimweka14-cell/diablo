@@ -4,7 +4,7 @@
  * Never put the API key in frontend files or commit it to GitHub.
  */
 const DEFAULT_ORIGIN = "https://ibrahimweka14-cell.github.io";
-const SYSTEM_PROMPT = `أنت DIABLO AI، مساعد تعليمي عربي ودود. أجب بوضوح وبشكل منظم، وافهم سياق المحادثة السابقة. اشرح المسائل خطوة بخطوة عند طلب ذلك، ولا تخترع معلومات إذا لم تكن متأكدًا. عند تحليل صورة، اقرأ النص الظاهر فيها قدر الإمكان واشرح ما تحتويه. استخدم لغة المستخدم، وادعم الطالب على الفهم لا مجرد نسخ الإجابة. لا تدّعِ أنك ChatGPT أو Gemini؛ أنت DIABLO AI.`;
+const SYSTEM_PROMPT = `أنت DIABLO AI، مساعد تعليمي عربي ودود. أجب بوضوح وبشكل منظم، وافهم سياق المحادثة السابقة. لا تخترع معلومات إذا لم تكن متأكدًا. عند تحليل صورة، اقرأ النص الظاهر فيها قدر الإمكان واشرح ما تحتويه. استخدم لغة المستخدم، وادعم الطالب على الفهم لا مجرد نسخ الإجابة. لا تدّعِ أنك ChatGPT أو Gemini؛ أنت DIABLO AI.`;
 
 function json(data, status = 200, headers = {}) {
   return new Response(JSON.stringify(data), {
@@ -103,7 +103,7 @@ async function realtimeToken(request, env) {
     session: {
       type: "realtime",
       model: env.OPENAI_REALTIME_MODEL || "gpt-realtime-2.1",
-      instructions: "أنت DIABLO AI، مساعد عربي ودود. تحدث باللهجة المصرية عند مخاطبة المستخدم بالعربية. اسمع المستخدم جيدًا، أجب بصوت طبيعي ومختصر، واشرح دراسيًا خطوة بخطوة عند الحاجة. لا تدّع أنك ChatGPT أو Gemini.",
+      instructions: "أنت DIABLO AI، مساعد عربي ودود. تحدث باللهجة المصرية عند مخاطبة المستخدم بالعربية. اسمع المستخدم جيدًا وأجب بصوت طبيعي وواضح. لا تدّع أنك ChatGPT أو Gemini.",
       audio: {
         input: {
           transcription: { model: env.OPENAI_REALTIME_TRANSCRIPTION_MODEL || "gpt-4o-mini-transcribe", language: "ar" },
@@ -180,16 +180,17 @@ export default {
     const origin = request.headers.get("Origin") || "";
     const cors = corsHeaders(origin, env);
     const url = new URL(request.url);
+    const pathname = url.pathname.replace(/\/+$/, "") || "/";
     if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: cors });
-    if (request.method === "GET" && url.pathname === "/health") return json({ ok: true, service: "DIABLO AI", version: "2026-10-11-image-voice-diagnostics", chat: true, imageInput: true, transcription: Boolean(env.OPENAI_API_KEY), realtimeVoice: Boolean(env.OPENAI_API_KEY), chatModel: env.OPENAI_MODEL || "gpt-4.1-mini", realtimeModel: env.OPENAI_REALTIME_MODEL || "gpt-realtime-2.1" }, 200, cors);
+    if (request.method === "GET" && (pathname === "/health" || pathname === "/")) return json({ ok: true, service: "DIABLO AI", version: "2026-10-12-audit-fix-1", chat: true, imageInput: true, transcription: Boolean(env.OPENAI_API_KEY), realtimeVoice: Boolean(env.OPENAI_API_KEY), chatModel: env.OPENAI_MODEL || "gpt-4.1-mini", realtimeModel: env.OPENAI_REALTIME_MODEL || "gpt-realtime-2.1", note: "If this version is not shown, deploy this worker.js to the same Worker URL used by the website." }, 200, cors);
     if (origin && !cors["Access-Control-Allow-Origin"]) return json({ error: "هذا الموقع غير مسموح له باستخدام DIABLO AI." }, 403, cors);
     if (request.method !== "POST") return json({ error: "طريقة الطلب غير مدعومة." }, 405, cors);
     const length = Number(request.headers.get("Content-Length") || 0);
     if (length > 28 * 1024 * 1024) return json({ error: "حجم الطلب كبير جدًا." }, 413, cors);
     let response;
-    if (url.pathname === "/chat") response = await chat(request, env);
-    else if (url.pathname === "/transcribe") response = await transcribe(request, env);
-    else if (url.pathname === "/realtime-token") response = await realtimeToken(request, env);
+    if (pathname === "/chat") response = await chat(request, env);
+    else if (pathname === "/transcribe") response = await transcribe(request, env);
+    else if (pathname === "/realtime-token") response = await realtimeToken(request, env);
     else return json({ error: "المسار غير موجود." }, 404, cors);
     const headers = new Headers(response.headers);
     for (const [k, v] of Object.entries(cors)) headers.set(k, v);
