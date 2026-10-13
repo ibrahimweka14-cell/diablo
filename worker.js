@@ -33,6 +33,8 @@ function normalizeForChat(content) {
       }
     } else if (part.type === "input_image" && typeof part.image_url === "string") {
       parts.push({ type: "image_url", image_url: { url: part.image_url } });
+    } else if (part.type === "input_image" && typeof part.image_url?.url === "string") {
+      parts.push({ type: "image_url", image_url: { url: part.image_url.url } });
     }
   }
   return parts.length ? parts : "";
@@ -84,7 +86,7 @@ async function chat(request, env) {
       let message = "حصلت مشكلة في خدمة الذكاء الاصطناعي.";
       if (upstream.status === 401 || upstream.status === 403) message = "مفتاح Groq غير صحيح أو لا يملك الصلاحية المطلوبة. راجع GROQ_API_KEY في Cloudflare.";
       else if (upstream.status === 429) message = "وصل DIABLO إلى حد استخدام Groq المتاح حاليًا. جرّب لاحقًا أو راجع حدود حسابك.";
-      else if (upstream.status === 400 || upstream.status === 404) message = "النموذج غير متاح أو الطلب غير مدعوم في Groq. راجع GROQ_MODEL أو GROQ_VISION_MODEL." + (detail ? " التفاصيل: " + detail : "");
+      else if (upstream.status === 400 || upstream.status === 404) message = (hasImage ? "تعذر تحليل الصورة: نموذج الرؤية غير متاح أو صيغة الصورة غير مدعومة. راجع GROQ_VISION_MODEL في Cloudflare." : "النموذج النصي غير متاح. راجع GROQ_MODEL في Cloudflare.") + (detail ? " التفاصيل: " + detail : "");
       else if (detail) message += " " + detail;
       return json({ error: message }, upstream.status === 429 ? 429 : 502);
     }

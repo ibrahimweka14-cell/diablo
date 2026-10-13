@@ -1316,7 +1316,7 @@
       <div id="diablo-typing" class="diablo-typing" hidden><span></span><span></span><span></span> DIABLO AI بيفكر…</div>
     </div>
     <div class="diablo-composer-wrap"><div id="diablo-attachment-preview" class="diablo-attachment-preview"><div id="ai-image-preview" hidden></div></div>
-      <div class="diablo-composer-tools"><button type="button" onclick="document.getElementById('ai-image-input').click()">＋ <span>إضافة صورة</span></button><button type="button" onclick="openAICamera()">▣ <span>الكاميرا</span></button><button type="button" id="diablo-live-voice-open" onclick="startDiabloLiveVoice()">🎙️ <span>تحدث مع DIABLO</span></button><input id="ai-image-input" type="file" accept="image/*" hidden onchange="handleAIImageSelection(this)"></div>
+      <div class="diablo-composer-tools"><button type="button" onclick="document.getElementById('ai-image-input').click()">＋ <span>إضافة صورة</span></button><button type="button" onclick="openAICamera()">▣ <span>الكاميرا</span></button><input id="ai-image-input" type="file" accept="image/*" hidden onchange="handleAIImageSelection(this)"></div>
       <div class="diablo-composer"><textarea id="ai-question" rows="1" placeholder="اكتب رسالتك لـ DIABLO AI…" aria-label="رسالتك"></textarea><button id="diablo-send-btn" class="diablo-send-btn" onclick="askAI()" aria-label="إرسال الرسالة">➤</button></div>
       <div class="diablo-composer-foot"><span>بعد اختيار صورة، اكتب سؤالك واضغط إرسال — أو أرسل الصورة وحدها لتحليلها.</span><button id="ai-image-remove" class="diablo-remove-image" onclick="removeAIImage()" hidden>إزالة الصورة ×</button></div>
     </div>
@@ -1540,19 +1540,6 @@
 </div>
 
 
-
-<!-- DIABLO realtime voice conversation -->
-<div id="diablo-live-voice-modal" class="diablo-voice-overlay" hidden role="dialog" aria-modal="true" aria-labelledby="diablo-live-voice-title">
-  <div class="diablo-voice-card">
-    <button type="button" class="diablo-voice-close" onclick="stopDiabloLiveVoice()" aria-label="إنهاء المكالمة">✕</button>
-    <div class="diablo-voice-orb">D</div>
-    <h2 id="diablo-live-voice-title">محادثة صوتية مباشرة</h2>
-    <p id="diablo-live-voice-status" role="status">اضغط بدء الاتصال واسمح باستخدام الميكروفون.</p>
-    <audio id="diablo-live-voice-audio" autoplay playsinline></audio>
-    <div class="diablo-voice-actions"><button type="button" id="diablo-live-voice-start" class="diablo-voice-start" onclick="connectDiabloLiveVoice()">بدء الاتصال المباشر 🎙️</button><button type="button" id="diablo-fallback-voice-btn" class="diablo-voice-start" onclick="toggleDiabloFallbackRecording()">تحدث واسمع الرد</button><button type="button" class="diablo-voice-end" onclick="stopDiabloLiveVoice()">إنهاء المحادثة</button></div>
-    <small>الاتصال المباشر يحتاج نموذج Realtime مفعّلًا. لو غير متاح، استخدم «تحدث واسمع الرد» للتسجيل ثم سماع الإجابة. يتم إرسال الصوت إلى خدمة الذكاء الاصطناعي لمعالجته.</small>
-  </div>
-</div>
 
 <!-- DIABLO live camera dialog -->
 <div id="ai-camera-modal" class="ai-camera-modal" role="dialog" aria-modal="true" aria-labelledby="ai-camera-title" hidden>
