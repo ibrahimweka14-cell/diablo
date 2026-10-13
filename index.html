@@ -131,6 +131,7 @@
             🤖 Diablo AI
         </button>
 
+        <button id="diablo-auth-top-btn" class="diablo-auth-top" type="button" onclick="openDiabloAuth()">👤 تسجيل الدخول</button>
 
         <button onclick="openSummarizer()">
             📝 ملخص الدروس
@@ -1323,7 +1324,7 @@
       <div id="diablo-typing" class="diablo-typing" hidden><span></span><span></span><span></span> DIABLO AI بيفكر…</div>
     </div>
     <div class="diablo-composer-wrap"><div id="diablo-attachment-preview" class="diablo-attachment-preview"><div id="ai-image-preview" hidden></div></div>
-      <div class="diablo-composer-tools"><button type="button" onclick="document.getElementById('ai-image-input').click()">＋ <span>إضافة صورة</span></button><button type="button" onclick="openAICamera()">▣ <span>الكاميرا</span></button><button type="button" id="diablo-live-voice-open" onclick="startDiabloLiveVoice()">🎙️ <span>تحدث مع DIABLO</span></button><input id="ai-image-input" type="file" accept="image/*" hidden onchange="handleAIImageSelection(this)"></div>
+      <div class="diablo-composer-tools"><button type="button" onclick="document.getElementById('ai-image-input').click()">＋ <span>إضافة صورة</span></button><button type="button" onclick="openAICamera()">▣ <span>الكاميرا</span></button><input id="ai-image-input" type="file" accept="image/*" hidden onchange="handleAIImageSelection(this)"></div>
       <div class="diablo-composer"><textarea id="ai-question" rows="1" placeholder="اكتب رسالتك لـ DIABLO AI…" aria-label="رسالتك"></textarea><button id="diablo-send-btn" class="diablo-send-btn" onclick="askAI()" aria-label="إرسال الرسالة">➤</button></div>
       <div class="diablo-composer-foot"><span>بعد اختيار صورة، اكتب سؤالك واضغط إرسال — أو أرسل الصورة وحدها لتحليلها.</span><span id="diablo-usage-status" aria-live="polite">سجّل الدخول لمتابعة حدود الاستخدام.</span><button id="ai-image-remove" class="diablo-remove-image" onclick="removeAIImage()" hidden>إزالة الصورة ×</button></div>
     </div>
@@ -1574,6 +1575,30 @@
       <button type="button" class="main-btn" onclick="captureAICameraPhoto()">التقاط الصورة</button>
       <button type="button" class="secondary-btn" onclick="switchAICamera()">تبديل الكاميرا</button>
     </div>
+  </div>
+</div>
+
+<!-- DIABLO ACCOUNT MODAL -->
+<div id="diablo-auth-modal" class="diablo-auth-overlay" hidden role="dialog" aria-modal="true" aria-labelledby="diablo-auth-title">
+  <div class="diablo-auth-card">
+    <button type="button" class="diablo-plus-close" onclick="closeDiabloAuth()" aria-label="إغلاق">✕</button>
+    <h2 id="diablo-auth-title">حساب <span>DIABLO</span></h2>
+    <p>سجّل الدخول لحسابك لمتابعة استخدام DIABLO AI وحفظ محادثاتك.</p>
+    <form id="diablo-auth-form" onsubmit="return false">
+      <label for="diablo-auth-email">البريد الإلكتروني</label>
+      <input id="diablo-auth-email" type="email" autocomplete="email" placeholder="name@example.com" required>
+      <label for="diablo-auth-password">كلمة المرور</label>
+      <input id="diablo-auth-password" type="password" autocomplete="current-password" minlength="8" placeholder="8 أحرف على الأقل" required>
+      <div class="diablo-auth-actions">
+        <button type="button" onclick="diabloEmailSignIn()">تسجيل الدخول</button>
+        <button type="button" class="secondary" onclick="diabloEmailSignUp()">إنشاء حساب</button>
+      </div>
+      <button type="button" class="diablo-google-btn" onclick="diabloGoogleSignIn()">المتابعة باستخدام Google</button>
+      <button type="button" class="diablo-auth-link" onclick="diabloResetPassword()">نسيت كلمة المرور؟</button>
+    </form>
+    <div id="diablo-auth-user" class="diablo-auth-user" hidden></div>
+    <button id="diablo-signout-btn" class="diablo-signout-btn" type="button" onclick="diabloSignOut()" hidden>تسجيل الخروج</button>
+    <div id="diablo-auth-status" class="diablo-auth-status" role="status" aria-live="polite">استخدم البريد وكلمة المرور أو تابع باستخدام Google.</div>
   </div>
 </div>
 
