@@ -271,7 +271,7 @@ async function askAI() {
 
     const userContent = aiSelectedImageDataUrl
         ? [
-            { type: "text", text: (question || "حلل الصورة واشرح محتواها بالتفصيل المناسب للطالب.") },
+            { type: "text", text: (question || "حلل الصورة واشرح محتواها بالتفصيل المناسب للطالب.") + "\nلو الصورة فيها سؤال دراسي، اقرأه واشرح الحل خطوة بخطوة." },
             { type: "image_url", image_url: { url: aiSelectedImageDataUrl, detail: "high" } }
           ]
         : question;
@@ -2907,10 +2907,8 @@ async function requestSummary(sourceText) {
         "أنت أداة تلخيص دروس داخل منصة Diablo التعليمية. " +
         "لخص النص التالي بالعربية بشكل واضح ومنظم للطالب. " +
         "استخرج أهم الأفكار والقوانين والتعريفات والنقاط المهمة. " +
-        "احصر كل الأمثلة التي ذكرها المدرس ولا تسقط أي مثال ولا تدمج أمثلة مختلفة في مثال واحد، وحافظ على الأرقام والمعادلات والأسماء كما وردت. " +
-        "إذا كان المثال غير واضح في التفريغ، علّمه بأنه غير واضح بدل اختراع تفاصيل. " +
         "لا تضف معلومات غير موجودة في النص. " +
-        "استخدم عناوين ونقاط منظمة، وفي النهاية اكتب " +
+        "استخدم عناوين ونقاط مختصرة، وفي النهاية اكتب " +
         "قسمًا صغيرًا بعنوان: أهم ما يجب حفظه. " +
         "النص المراد تلخيصه:\n\n" +
         cleanText;
@@ -3136,7 +3134,6 @@ let recordingSeconds = 0;
 let isRecording = false;
 let shouldRestartSpeechRecognition = false;
 let finalTranscript = "";
-let recordingTranscriptBase = "";
 
 /*
    دعم Chrome / Android / Edge
@@ -3213,7 +3210,6 @@ async function startRecording() {
 
     finalTranscript =
         transcript.value.trim();
-    recordingTranscriptBase = transcript.value.trim();
 
     try {
 
@@ -3273,7 +3269,7 @@ async function startRecording() {
             stream.getTracks().forEach(track => track.stop());
             // If browser speech recognition produced no text, ask the secure Worker to transcribe the saved recording.
             const transcriptBox = document.getElementById("voice-transcript");
-            if (!transcriptBox || !recordedChunks.length) return;
+            if (!transcriptBox || transcriptBox.value.trim() || !recordedChunks.length) return;
             const blob = new Blob(recordedChunks, { type: activeRecorder?.mimeType || recordedChunks[0]?.type || "audio/webm" });
             if (blob.size > 20 * 1024 * 1024) {
                 const voiceStatus = document.getElementById("voice-status");
@@ -3295,7 +3291,7 @@ async function startRecording() {
                 });
                 const result = await response.json().catch(() => ({}));
                 if (!response.ok || !result.text) throw new Error(result.error || "خدمة تحويل الصوت لنص غير جاهزة.");
-                transcriptBox.value = [recordingTranscriptBase, result.text.trim()].filter(Boolean).join("\n");
+                transcriptBox.value = [transcriptBox.value.trim(), result.text.trim()].filter(Boolean).join("\n");
                 transcriptBox.dispatchEvent(new Event("input", { bubbles: true }));
                 if (voiceStatus) voiceStatus.textContent = "✅ تم تحويل التسجيل لنص. تقدر دلوقتي تلخّص الدرس.";
             } catch (error) {
@@ -3847,7 +3843,6 @@ function clearVoiceTranscript() {
     }
 
     finalTranscript = "";
-    recordingTranscriptBase = "";
 
 }
 
@@ -4220,8 +4215,8 @@ document.addEventListener("DOMContentLoaded", renderStudyProgress);
 let diabloCurrentChatId = null;
 let diabloChatStore = [];
 let diabloSending = false;
-function diabloLoadChats(){try{const v=JSON.parse(localStorage.getItem('diablo_ai_chats_v2')||'[]');diabloChatStore=Array.isArray(v)?v.map(c=>({...c,messages:(Array.isArray(c.messages)?c.messages:[]).map(m=>({...m,image:'',content:String(m.content||m.displayText||''),displayText:String(m.displayText||m.content||'')}))})):[]}catch{diabloChatStore=[]}renderDiabloHistory();}
-function diabloSaveChats(){try{const safe=diabloChatStore.slice(0,50).map(c=>({...c,messages:(c.messages||[]).slice(-100).map(m=>({role:m.role,content:String(m.content||m.displayText||''),displayText:String(m.displayText||m.content||''),image:'',updatedAt:m.updatedAt||Date.now()}))}));localStorage.setItem('diablo_ai_chats_v2',JSON.stringify(safe))}catch(e){console.warn('Could not save DIABLO chats locally',e)}renderDiabloHistory();}
+function diabloLoadChats(){try{const v=JSON.parse(localStorage.getItem('diablo_ai_chats_v2')||'[]');diabloChatStore=Array.isArray(v)?v:[]}catch{diabloChatStore=[]}renderDiabloHistory();}
+function diabloSaveChats(){try{localStorage.setItem('diablo_ai_chats_v2',JSON.stringify(diabloChatStore.slice(0,50)))}catch(e){console.warn('Could not save DIABLO chats locally',e)}renderDiabloHistory();}
 function diabloCurrentChat(){return diabloChatStore.find(c=>c.id===diabloCurrentChatId)||null;}
 function startNewDiabloChat(){diabloCurrentChatId='d'+Date.now();diabloChatStore.unshift({id:diabloCurrentChatId,title:'محادثة جديدة',messages:[],updatedAt:Date.now()});aiMessages=[];renderDiabloChat();diabloSaveChats();document.getElementById('ai-question')?.focus();document.getElementById('diablo-sidebar')?.classList.remove('open');}
 function renderDiabloHistory(){const list=document.getElementById('diablo-history-list');if(!list)return;list.innerHTML='';diabloChatStore.slice().sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0)).forEach(c=>{const b=document.createElement('button');b.className='diablo-history-item'+(c.id===diabloCurrentChatId?' active':'');b.innerHTML='<span></span><small>›</small>';b.querySelector('span').textContent=c.title||'محادثة جديدة';b.onclick=()=>loadDiabloChat(c.id);list.appendChild(b)});if(!list.children.length){const p=document.createElement('div');p.style.cssText='padding:12px;color:#7f8798;font-size:12px';p.textContent='لسه مفيش محادثات محفوظة.';list.appendChild(p)}}

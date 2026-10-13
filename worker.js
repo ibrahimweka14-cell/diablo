@@ -1,10 +1,10 @@
 /* DIABLO AI backend for Cloudflare Workers.
- * Required secret: OPENAI_API_KEY
- * Optional variables: OPENAI_MODEL, OPENAI_TRANSCRIPTION_MODEL, ALLOWED_ORIGIN
- * Never put the API key in frontend files or commit it to GitHub.
+ * Required secret: GROQ_API_KEY
+ * Optional variables: GROQ_MODEL, GROQ_VISION_MODEL, GROQ_TRANSCRIPTION_MODEL, ALLOWED_ORIGIN
+ * Keep provider keys in Cloudflare Secrets only; never put them in frontend files or GitHub.
  */
 const DEFAULT_ORIGIN = "https://ibrahimweka14-cell.github.io";
-const SYSTEM_PROMPT = `أنت DIABLO AI، مساعد تعليمي عربي ودود. أجب بوضوح وبشكل منظم، وافهم سياق المحادثة السابقة. لا تخترع معلومات إذا لم تكن متأكدًا. عند تحليل صورة، اقرأ النص الظاهر فيها قدر الإمكان واشرح ما تحتويه. استخدم لغة المستخدم، وادعم الطالب على الفهم لا مجرد نسخ الإجابة. لا تدّعِ أنك ChatGPT أو Gemini؛ أنت DIABLO AI.`;
+const SYSTEM_PROMPT = `أنت DIABLO AI، مساعد تعليمي عربي ودود. أجب بوضوح وبشكل منظم، وافهم سياق المحادثة السابقة. اشرح المسائل خطوة بخطوة عند طلب ذلك، ولا تخترع معلومات إذا لم تكن متأكدًا. عند تحليل صورة، اقرأ النص الظاهر فيها قدر الإمكان واشرح ما تحتويه. عند تلخيص تسجيل مدرس، حافظ على الأمثلة التي ذكرها، والقوانين والتعريفات والأرقام المهمة، ولا تخترع أمثلة على أنها من كلام المدرس. استخدم لغة المستخدم، وادعم الطالب على الفهم لا مجرد نسخ الإجابة. لا تدّعِ أنك ChatGPT أو Gemini؛ أنت DIABLO AI.`;
 
 function json(data, status = 200, headers = {}) {
   return new Response(JSON.stringify(data), {
@@ -18,122 +18,85 @@ function corsHeaders(origin, env) {
   if (origin && allowed.includes(origin)) headers["Access-Control-Allow-Origin"] = origin;
   return headers;
 }
-function extractText(response) {
-  if (typeof response.output_text === "string" && response.output_text.trim()) return response.output_text.trim();
-  const parts = [];
-  for (const item of response.output || []) {
-    if (item.type === "message") for (const c of item.content || []) if (c.type === "output_text" && c.text) parts.push(c.text);
-  }
-  return parts.join("\n").trim();
-}
-function normalizeContent(content) {
-  if (typeof content === "string") return content;
+function normalizeForChat(content) {
+  if (typeof content === "string") return content.slice(0, 20000);
   if (!Array.isArray(content)) return String(content ?? "");
-  const normalized = [];
+  const parts = [];
   for (const part of content) {
     if (!part || typeof part !== "object") continue;
-    if ((part.type === "text" || part.type === "input_text") && typeof (part.text) === "string") {
-      normalized.push({ type: "input_text", text: part.text.slice(0, 12000) });
+    if ((part.type === "text" || part.type === "input_text") && typeof part.text === "string") {
+      parts.push({ type: "text", text: part.text.slice(0, 12000) });
     } else if (part.type === "image_url" && typeof part.image_url?.url === "string") {
       const url = part.image_url.url;
       if (/^https:\/\//i.test(url) || /^data:image\/(png|jpeg|jpg|webp|gif);base64,/i.test(url)) {
-        normalized.push({ type: "input_image", image_url: url, detail: ["low", "high", "auto"].includes(part.image_url.detail) ? part.image_url.detail : "auto" });
+        parts.push({ type: "image_url", image_url: { url } });
       }
     } else if (part.type === "input_image" && typeof part.image_url === "string") {
-      normalized.push({ type: "input_image", image_url: part.image_url, detail: part.detail || "auto" });
+      parts.push({ type: "image_url", image_url: { url: part.image_url } });
     }
   }
-  return normalized.length ? normalized : "";
+  return parts.length ? parts : "";
+}
+function messageHasImage(content) {
+  return Array.isArray(content) && content.some(p =>
+    p && (p.type === "image_url" || p.type === "input_image") &&
+    (typeof p.image_url === "string" || typeof p.image_url?.url === "string")
+  );
 }
 async function chat(request, env) {
-  if (!env.OPENAI_API_KEY) return json({ error: "خادم DIABLO غير مكتمل الإعداد: أضف OPENAI_API_KEY كـ Secret في Cloudflare." }, 503);
+  if (!env.GROQ_API_KEY) return json({ error: "خادم DIABLO غير مكتمل الإعداد: أضف GROQ_API_KEY كـ Secret في Cloudflare." }, 503);
   let body;
   try { body = await request.json(); } catch { return json({ error: "صيغة الطلب غير صحيحة." }, 400); }
   if (!Array.isArray(body.messages) || !body.messages.length) return json({ error: "اكتب رسالة أو أرفق صورة أولًا." }, 400);
-  if (body.messages.length > 20) body.messages = body.messages.slice(-20);
-  let instructions = SYSTEM_PROMPT;
-  const input = [];
-  for (const msg of body.messages) {
+  const incoming = body.messages.slice(-20);
+  const messages = [{ role: "system", content: SYSTEM_PROMPT }];
+  let hasImage = false;
+  for (const msg of incoming) {
     if (!msg || !["system", "developer", "user", "assistant"].includes(msg.role)) continue;
     if (msg.role === "system" || msg.role === "developer") {
-      const t = normalizeContent(msg.content);
-      if (typeof t === "string" && t) instructions += "\n\n" + t.slice(0, 5000);
+      const c = normalizeForChat(msg.content);
+      if (typeof c === "string" && c.trim()) messages[0].content += "\n\n" + c.slice(0, 4000);
       continue;
     }
-    const content = normalizeContent(msg.content);
+    const content = normalizeForChat(msg.content);
     if (typeof content === "string" ? !content.trim() : !content.length) continue;
-    input.push({ role: msg.role, content });
+    if (messageHasImage(msg.content)) hasImage = true;
+    // Some providers accept only user/assistant/system roles.
+    messages.push({ role: msg.role, content });
   }
-  if (!input.length) return json({ error: "لم أستطع قراءة محتوى الرسالة." }, 400);
+  if (messages.length < 2) return json({ error: "لم أستطع قراءة محتوى الرسالة." }, 400);
+  const model = hasImage
+    ? (env.GROQ_VISION_MODEL || "meta-llama/llama-4-scout-17b-16e-instruct")
+    : (env.GROQ_MODEL || "llama-3.3-70b-versatile");
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 55000);
   try {
-    const upstream = await fetch("https://api.openai.com/v1/responses", {
+    const upstream = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
       signal: controller.signal,
-      headers: { "Authorization": `Bearer ${env.OPENAI_API_KEY}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: env.OPENAI_MODEL || "gpt-4.1-mini",
-        instructions,
-        input,
-        max_output_tokens: 1800,
-        store: false
-      })
+      headers: { "Authorization": `Bearer ${env.GROQ_API_KEY}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ model, messages, max_tokens: 1800, temperature: 0.4 })
     });
     const data = await upstream.json().catch(() => ({}));
     if (!upstream.ok) {
-      console.error("OpenAI Responses API error", upstream.status, data?.error?.code || data?.error?.type || "unknown");
-      const apiMessage = String(data?.error?.message || "").slice(0, 220);
-      const message = upstream.status === 401 ? "مفتاح الذكاء الاصطناعي غير صحيح. راجع إعدادات Cloudflare." : upstream.status === 429 ? "وصلنا لحد الاستخدام أو الرصيد المتاح. راجع الرصيد وحدود الاستخدام." : upstream.status === 400 || upstream.status === 404 ? "إعدادات الطلب أو اسم النموذج غير مناسب. راجع OPENAI_MODEL وتأكد أنه يدعم الصور عند إرفاق صورة." + (apiMessage ? " التفاصيل: " + apiMessage : "") : "حصلت مشكلة في خدمة الذكاء الاصطناعي. " + (apiMessage || "راجع إعدادات النموذج والخادم.");
+      console.error("Groq chat API error", upstream.status, data?.error?.code || data?.error?.type || "unknown");
+      const detail = String(data?.error?.message || "").slice(0, 220);
+      let message = "حصلت مشكلة في خدمة الذكاء الاصطناعي.";
+      if (upstream.status === 401 || upstream.status === 403) message = "مفتاح Groq غير صحيح أو لا يملك الصلاحية المطلوبة. راجع GROQ_API_KEY في Cloudflare.";
+      else if (upstream.status === 429) message = "وصل DIABLO إلى حد استخدام Groq المتاح حاليًا. جرّب لاحقًا أو راجع حدود حسابك.";
+      else if (upstream.status === 400 || upstream.status === 404) message = "النموذج غير متاح أو الطلب غير مدعوم في Groq. راجع GROQ_MODEL أو GROQ_VISION_MODEL." + (detail ? " التفاصيل: " + detail : "");
+      else if (detail) message += " " + detail;
       return json({ error: message }, upstream.status === 429 ? 429 : 502);
     }
-    const answer = extractText(data);
+    const answer = String(data?.choices?.[0]?.message?.content || "").trim();
     if (!answer) return json({ error: "وصل رد فارغ من النموذج. جرّب صياغة السؤال مرة أخرى." }, 502);
-    return json({ answer, model: env.OPENAI_MODEL || "gpt-4.1-mini" });
+    return json({ answer, model });
   } catch (err) {
     if (err?.name === "AbortError") return json({ error: "الرد استغرق وقتًا طويلًا. جرّب سؤالًا أقصر." }, 504);
     console.error("DIABLO chat network error", err?.name || "unknown");
     return json({ error: "تعذر الاتصال بخدمة الذكاء الاصطناعي. حاول مرة أخرى." }, 502);
   } finally { clearTimeout(timeout); }
 }
-async function realtimeToken(request, env) {
-  if (!env.OPENAI_API_KEY) return json({ error: "أضف OPENAI_API_KEY كـ Secret في Cloudflare أولًا." }, 503);
-  const payload = {
-    expires_after: { anchor: "created_at", seconds: 600 },
-    session: {
-      type: "realtime",
-      model: env.OPENAI_REALTIME_MODEL || "gpt-realtime-2.1",
-      instructions: "أنت DIABLO AI، مساعد عربي ودود. تحدث باللهجة المصرية عند مخاطبة المستخدم بالعربية. اسمع المستخدم جيدًا وأجب بصوت طبيعي وواضح. لا تدّع أنك ChatGPT أو Gemini.",
-      audio: {
-        input: {
-          transcription: { model: env.OPENAI_REALTIME_TRANSCRIPTION_MODEL || "gpt-4o-mini-transcribe", language: "ar" },
-          turn_detection: { type: "server_vad", create_response: true, interrupt_response: true }
-        },
-        output: { voice: env.OPENAI_REALTIME_VOICE || "marin" }
-      }
-    }
-  };
-  try {
-    const upstream = await fetch("https://api.openai.com/v1/realtime/client_secrets", {
-      method: "POST",
-      headers: { "Authorization": `Bearer ${env.OPENAI_API_KEY}`, "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    });
-    const data = await upstream.json().catch(() => ({}));
-    const secretValue = data?.value || data?.client_secret?.value || "";
-    if (!upstream.ok || !secretValue) {
-      console.error("Realtime token error", upstream.status, data?.error?.code || data?.error?.type || "unknown");
-      const detail = String(data?.error?.message || data?.message || "").slice(0, 240);
-      const prefix = upstream.status === 401 ? "مفتاح API غير صحيح أو غير مصرح." : upstream.status === 429 ? "وصلنا لحد استخدام خدمة الصوت أو الرصيد المتاح." : upstream.status === 404 ? "مسار خدمة الصوت غير متاح؛ تأكد من إعدادات حساب API." : "تعذر إنشاء رمز الصوت";
-      return json({ error: prefix + ` (HTTP ${upstream.status}).` + (detail ? " التفاصيل: " + detail : " راجع اسم النموذج OPENAI_REALTIME_MODEL وإتاحته في حسابك.") }, upstream.status === 429 ? 429 : 502);
-    }
-    return json({ value: secretValue, expires_at: data.expires_at, model: payload.session.model });
-  } catch (error) {
-    console.error("Realtime token network error", error?.name || "unknown");
-    return json({ error: "تعذر الاتصال بخدمة المحادثة الصوتية. حاول مرة أخرى." }, 502);
-  }
-}
-
 function base64ToBytes(value) {
   const clean = String(value || "").replace(/^data:[^,]*;base64,/, "");
   const binary = atob(clean);
@@ -142,7 +105,7 @@ function base64ToBytes(value) {
   return bytes;
 }
 async function transcribe(request, env) {
-  if (!env.OPENAI_API_KEY) return json({ error: "خادم DIABLO غير مكتمل الإعداد: أضف OPENAI_API_KEY كـ Secret في Cloudflare." }, 503);
+  if (!env.GROQ_API_KEY) return json({ error: "أضف GROQ_API_KEY كـ Secret في Cloudflare أولًا." }, 503);
   let body;
   try { body = await request.json(); } catch { return json({ error: "تعذر قراءة ملف الصوت." }, 400); }
   if (!body.audioBase64) return json({ error: "لم يصل تسجيل صوتي." }, 400);
@@ -154,19 +117,19 @@ async function transcribe(request, env) {
   const ext = mime.includes("mp4") ? "m4a" : mime.includes("mpeg") ? "mp3" : mime.includes("wav") ? "wav" : mime.includes("ogg") ? "ogg" : "webm";
   const form = new FormData();
   form.append("file", new Blob([bytes], { type: mime }), `diablo-recording.${ext}`);
-  form.append("model", env.OPENAI_TRANSCRIPTION_MODEL || "gpt-4o-mini-transcribe");
+  form.append("model", env.GROQ_TRANSCRIPTION_MODEL || "whisper-large-v3-turbo");
   form.append("language", "ar");
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 55000);
   try {
-    const upstream = await fetch("https://api.openai.com/v1/audio/transcriptions", {
+    const upstream = await fetch("https://api.groq.com/openai/v1/audio/transcriptions", {
       method: "POST", signal: controller.signal,
-      headers: { "Authorization": `Bearer ${env.OPENAI_API_KEY}` }, body: form
+      headers: { "Authorization": `Bearer ${env.GROQ_API_KEY}` }, body: form
     });
     const data = await upstream.json().catch(() => ({}));
     if (!upstream.ok) {
-      console.error("Transcription API error", upstream.status, data?.error?.code || "unknown");
-      return json({ error: upstream.status === 429 ? "وصلنا لحد الاستخدام المتاح لتحويل الصوت لنص." : "تعذر تحويل التسجيل إلى نص. تأكد من إعداد نموذج التفريغ وحجم الملف." }, upstream.status === 429 ? 429 : 502);
+      console.error("Groq transcription API error", upstream.status, data?.error?.code || "unknown");
+      return json({ error: upstream.status === 429 ? "وصلنا إلى حد استخدام Groq لتحويل الصوت لنص." : "تعذر تحويل التسجيل إلى نص. راجع نموذج GROQ_TRANSCRIPTION_MODEL وحجم الملف." }, upstream.status === 429 ? 429 : 502);
     }
     const text = String(data.text || "").trim();
     if (!text) return json({ error: "لم يتم التعرف على كلام واضح في التسجيل." }, 422);
@@ -180,17 +143,25 @@ export default {
     const origin = request.headers.get("Origin") || "";
     const cors = corsHeaders(origin, env);
     const url = new URL(request.url);
-    const pathname = url.pathname.replace(/\/+$/, "") || "/";
     if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: cors });
-    if (request.method === "GET" && (pathname === "/health" || pathname === "/")) return json({ ok: true, service: "DIABLO AI", version: "2026-10-12-audit-fix-1", chat: true, imageInput: true, transcription: Boolean(env.OPENAI_API_KEY), realtimeVoice: Boolean(env.OPENAI_API_KEY), chatModel: env.OPENAI_MODEL || "gpt-4.1-mini", realtimeModel: env.OPENAI_REALTIME_MODEL || "gpt-realtime-2.1", note: "If this version is not shown, deploy this worker.js to the same Worker URL used by the website." }, 200, cors);
+    if (request.method === "GET" && url.pathname === "/health") {
+      return json({
+        ok: true, service: "DIABLO AI", version: "2026-10-13-groq-migration",
+        provider: "groq", chat: Boolean(env.GROQ_API_KEY), imageInput: Boolean(env.GROQ_API_KEY),
+        transcription: Boolean(env.GROQ_API_KEY), realtimeVoice: false,
+        chatModel: env.GROQ_MODEL || "llama-3.3-70b-versatile",
+        visionModel: env.GROQ_VISION_MODEL || "meta-llama/llama-4-scout-17b-16e-instruct",
+        transcriptionModel: env.GROQ_TRANSCRIPTION_MODEL || "whisper-large-v3-turbo"
+      }, 200, cors);
+    }
     if (origin && !cors["Access-Control-Allow-Origin"]) return json({ error: "هذا الموقع غير مسموح له باستخدام DIABLO AI." }, 403, cors);
     if (request.method !== "POST") return json({ error: "طريقة الطلب غير مدعومة." }, 405, cors);
     const length = Number(request.headers.get("Content-Length") || 0);
     if (length > 28 * 1024 * 1024) return json({ error: "حجم الطلب كبير جدًا." }, 413, cors);
     let response;
-    if (pathname === "/chat") response = await chat(request, env);
-    else if (pathname === "/transcribe") response = await transcribe(request, env);
-    else if (pathname === "/realtime-token") response = await realtimeToken(request, env);
+    if (url.pathname === "/chat") response = await chat(request, env);
+    else if (url.pathname === "/transcribe") response = await transcribe(request, env);
+    else if (url.pathname === "/realtime-token") response = json({ error: "المحادثة الصوتية المباشرة غير متاحة عبر إعداد Groq الحالي. استخدم التسجيل ثم تحويله إلى نص." }, 501);
     else return json({ error: "المسار غير موجود." }, 404, cors);
     const headers = new Headers(response.headers);
     for (const [k, v] of Object.entries(cors)) headers.set(k, v);

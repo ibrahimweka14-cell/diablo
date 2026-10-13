@@ -3,9 +3,7 @@ main = "worker.js"
 compatibility_date = "2026-10-01"
 
 [vars]
-OPENAI_MODEL = "gpt-4.1-mini"
-OPENAI_TRANSCRIPTION_MODEL = "gpt-4o-mini-transcribe"
-OPENAI_REALTIME_MODEL = "gpt-realtime-2.1"
-OPENAI_REALTIME_TRANSCRIPTION_MODEL = "gpt-4o-mini-transcribe"
-OPENAI_REALTIME_VOICE = "marin"
 ALLOWED_ORIGIN = "https://ibrahimweka14-cell.github.io"
+GROQ_MODEL = "llama-3.3-70b-versatile"
+GROQ_VISION_MODEL = "meta-llama/llama-4-scout-17b-16e-instruct"
+GROQ_TRANSCRIPTION_MODEL = "whisper-large-v3-turbo"
