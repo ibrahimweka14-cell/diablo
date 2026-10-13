@@ -4341,7 +4341,15 @@ let diabloCloudSyncTimer = null;
 let diabloAuthEventLock = false;
 
 function diabloAuthConfigured() {
-  return DIABLO_SUPABASE_PUBLIC_KEY && !DIABLO_SUPABASE_PUBLIC_KEY.includes("PASTE_SUPABASE_");
+  const url = String(DIABLO_SUPABASE_URL || "").trim();
+  const key = String(DIABLO_SUPABASE_PUBLIC_KEY || "").trim();
+
+  return (
+    url.startsWith("https://") &&
+    key.length > 20 &&
+    !key.includes("PASTE_SUPABASE_") &&
+    !key.includes("YOUR_")
+  );
 }
 function diabloAuthStatus(message, kind = "") {
   const el = document.getElementById("diablo-auth-status");
