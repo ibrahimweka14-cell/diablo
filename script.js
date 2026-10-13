@@ -301,7 +301,7 @@ async function askAI() {
     try {
 
         const response =
-            await fetch(
+            await diabloFetch(
                 DIABLO_AI_URL,
                 {
                     method: "POST",
@@ -2923,7 +2923,7 @@ async function requestSummary(sourceText) {
         cleanText;
 
     const response =
-        await fetch(
+        await diabloFetch(
             DIABLO_AI_URL,
             {
                 method: "POST",
@@ -3294,7 +3294,7 @@ async function startRecording() {
                     reader.onerror = () => reject(new Error("تعذر قراءة التسجيل من الجهاز."));
                     reader.readAsDataURL(blob);
                 });
-                const response = await fetch(DIABLO_TRANSCRIBE_URL, {
+                const response = await diabloFetch(DIABLO_TRANSCRIBE_URL, {
                     method: "POST", headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ audioBase64: dataUrl, mimeType: blob.type || "audio/webm" })
                 });
@@ -4091,7 +4091,7 @@ async function generateLessonQuiz() {
         const prompt = "أنت منشئ اختبارات تعليمية لمنصة DIABLO. أنشئ 8 أسئلة باللغة العربية عن الموضوع التالي: " + topic + ". " +
             "نوّع بين اختيار من متعدد وصح/غلط وأسئلة قصيرة، وضع الإجابة الصحيحة وتفسيرًا مختصرًا بعد كل سؤال. " +
             "لا تدّعِ أن الأسئلة مأخوذة من منهج رسمي إذا لم يكن ذلك واضحًا. " + (source ? "اعتمد أساسًا على المحتوى التالي ولا تضف معلومات خارجه: \n" + source : "");
-        const response = await fetch(DIABLO_AI_URL, {
+        const response = await diabloFetch(DIABLO_AI_URL, {
             method: "POST", headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ messages: [{ role: "user", content: prompt }] })
         });
@@ -4117,7 +4117,7 @@ async function createSmartStudyPlan() {
     try {
         const prompt = "أنشئ خطة مذاكرة عملية باللغة العربية لمدة " + days + " يومًا، بمعدل " + hours + " ساعات يوميًا، بناءً فقط على المواد والدروس التالية: \n" + subjects +
             "\nوزّع الوقت على فترات قصيرة، وأضف مراجعة واستراحات واختبارًا ذاتيًا. لا تفترض مواعيد امتحانات لم يذكرها الطالب.";
-        const response = await fetch(DIABLO_AI_URL, {
+        const response = await diabloFetch(DIABLO_AI_URL, {
             method: "POST", headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ messages: [{ role: "user", content: prompt }] })
         });
@@ -4269,7 +4269,7 @@ window.askAI=async function(){
   });
   const payload=JSON.stringify({messages:requestMessages});
   if(payload.length>24*1024*1024)throw new Error('حجم المحادثة كبير جدًا. ابدأ محادثة جديدة أو أرسل صورة أصغر.');
-  const res=await fetch(DIABLO_AI_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:payload});
+  const res=await diabloFetch(DIABLO_AI_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:payload});
   const data=await res.json().catch(()=>({}));
   if(!res.ok)throw new Error(data?.error||data?.message||`فشل الخادم (HTTP ${res.status}).`);
   const answer=extractAIText(data);if(!answer)throw new Error(data?.error||'الخادم لم يرجع إجابة مفهومة.');
@@ -4339,6 +4339,49 @@ let diabloAuthUser = null;
 let diabloAuthInitialized = false;
 let diabloCloudSyncTimer = null;
 let diabloAuthEventLock = false;
+
+function diabloUsageMessage(usage) {
+  if (!usage) return "";
+  const plan = usage.plan === "plus" ? "PLUS 👑" : "FREE 🆓";
+  return `${plan} · الردود ${usage.chat_remaining ?? "—"}/${usage.chat_limit ?? "—"} · الصور ${usage.image_remaining ?? "—"}/${usage.image_limit ?? "—"} · الصوت ${usage.transcription_remaining ?? "—"}/${usage.transcription_limit ?? "—"}`;
+}
+function diabloUpdateUsageBadge(usage) {
+  const el = document.getElementById("diablo-usage-status");
+  if (el) el.textContent = usage ? diabloUsageMessage(usage) : (diabloAuthUser ? "جاري تحميل حدود الاستخدام…" : "سجّل الدخول لاستخدام DIABLO AI وتتبع حدودك.");
+  const plusButtons = document.querySelectorAll(".diablo-plus-top");
+  plusButtons.forEach(btn => { btn.textContent = usage?.plan === "plus" ? "✦ PLUS مفعّل" : "✦ PLUS"; });
+}
+async function diabloFetch(url, options = {}) {
+  if (!diabloSupabaseClient) throw new Error("سجّل الدخول إلى حساب DIABLO أولًا عشان نحتسب استخدامك اليومي.");
+  const { data, error } = await diabloSupabaseClient.auth.getSession();
+  const token = data?.session?.access_token;
+  if (error || !token) throw new Error("سجّل الدخول إلى حساب DIABLO أولًا عشان تستخدم المساعد.");
+  const headers = new Headers(options.headers || {});
+  headers.set("Authorization", `Bearer ${token}`);
+  const response = await fetch(url, { ...options, headers });
+  // Update the visible counter without consuming the response body used by the feature.
+  response.clone().json().then(payload => {
+    if (payload?.usage) diabloUpdateUsageBadge(payload.usage);
+    else if (payload?.allowed !== undefined && payload?.chat_limit) diabloUpdateUsageBadge(payload);
+    if (payload?.usage?.plan === "plus" || payload?.plan === "plus") {
+      document.querySelectorAll(".diablo-plus-top").forEach(btn => btn.textContent = "✦ PLUS مفعّل");
+    }
+  }).catch(() => {});
+  return response;
+}
+async function diabloRefreshUsage() {
+  if (!diabloSupabaseClient) { diabloUpdateUsageBadge(null); return; }
+  try {
+    const { data } = await diabloSupabaseClient.auth.getSession();
+    const token = data?.session?.access_token;
+    if (!token) { diabloUpdateUsageBadge(null); return; }
+    const base = DIABLO_AI_URL.replace(/\/chat$/, "");
+    const response = await fetch(base + "/usage", { headers: { "Authorization": `Bearer ${token}` } });
+    const usage = await response.json().catch(() => null);
+    if (response.ok && usage?.allowed !== undefined) diabloUpdateUsageBadge(usage);
+    else if (response.status === 503) diabloUpdateUsageBadge(null);
+  } catch (error) { console.warn("DIABLO usage status unavailable", error); }
+}
 
 function diabloAuthConfigured() {
   const url = String(DIABLO_SUPABASE_URL || "").trim();
@@ -4554,12 +4597,14 @@ async function diabloInitializeAuth() {
     const { data } = await diabloSupabaseClient.auth.getSession();
     diabloAuthUser = data?.session?.user || null;
     diabloUpdateAuthUI();
+    void diabloRefreshUsage();
     diabloSupabaseClient.auth.onAuthStateChange((event, session) => {
       if (diabloAuthEventLock) return;
       diabloAuthEventLock = true;
       const oldId = diabloAuthUser?.id || null;
       diabloAuthUser = session?.user || null;
       diabloUpdateAuthUI();
+      void diabloRefreshUsage();
       if (oldId !== (diabloAuthUser?.id || null)) {
         diabloCurrentChatId = null; aiMessages = [];
         window.diabloLoadChats();

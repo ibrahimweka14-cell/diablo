@@ -43,12 +43,12 @@
     <link
         rel="icon"
         type="image/png"
-        href="diablo-hero.svg"
+        href="diablo-hero.png"
     >
 
     <link
         rel="apple-touch-icon"
-        href="diablo-hero.svg"
+        href="diablo-hero.png"
     >
 
     <title>Diablo | منصة التعليم الذكية</title>
@@ -223,7 +223,7 @@
 
 
     <img
-        src="diablo-hero.svg"
+        src="diablo-hero.png"
         alt="Diablo"
         class="hero-image"
     >
@@ -1128,6 +1128,13 @@
     <p class="plus-disclaimer">الدفع والتفعيل الإلكتروني التلقائي غير مفعّلين حاليًا. لا تحول فلوس لأي جهة قبل الإعلان عن طريقة دفع رسمية وتأكيد شروط الاشتراك. زر الاستفسار لا يعني شراء الباقة أو تفعيلها.</p>
   </div>
 
+  <div class="plus-details diablo-limits-panel">
+    <h3>حدود الاستخدام اليومية</h3>
+    <p><strong>FREE 🆓:</strong> 30 رد ذكاء اصطناعي، و5 صور (بما فيها صور الكاميرا)، و3 تسجيلات صوتية للتحويل إلى نص يوميًا.</p>
+    <p><strong>PLUS 👑:</strong> 200 رد ذكاء اصطناعي، و50 صورة، و20 تسجيلًا صوتيًا للتحويل إلى نص يوميًا.</p>
+    <p>العداد مرتبط بحسابك، ويتجدد يوميًا بتوقيت UTC. يجب تسجيل الدخول لاحتساب الاستخدام. تفعيل PLUS يتم بعد التحقق من الاشتراك؛ اختيار الباقة وحده لا يفعّلها.</p>
+  </div>
+
   <div class="tools-grid">
     <article class="tool-card featured-tool">
       <h3>📄 شرح ملف أو صورة</h3>
@@ -1309,43 +1316,18 @@
     </div>
   </aside>
   <section class="diablo-chat-main">
-    <header class="diablo-chat-topbar"><button class="diablo-icon-btn mobile-only" onclick="toggleDiabloSidebar()" aria-label="القائمة">☰</button><div><strong>DIABLO AI</strong><span class="diablo-online-dot"></span><small>مساعد تعليمي ذكي</small></div><button class="diablo-auth-top" id="diablo-auth-top-btn" onclick="openDiabloAuth()">👤 تسجيل الدخول</button><button class="diablo-plus-top" onclick="openDiabloPlus()">✦ PLUS</button><button class="diablo-icon-btn" onclick="closeAI()" aria-label="إغلاق">✕</button></header>
+    <header class="diablo-chat-topbar"><button class="diablo-icon-btn mobile-only" onclick="toggleDiabloSidebar()" aria-label="القائمة">☰</button><div><strong>DIABLO AI</strong><span class="diablo-online-dot"></span><small>مساعد تعليمي ذكي</small></div><button class="diablo-plus-top" onclick="openDiabloPlus()">✦ PLUS</button><button class="diablo-icon-btn" onclick="closeAI()" aria-label="إغلاق">✕</button></header>
     <div class="diablo-chat-scroll" id="diablo-chat-scroll">
       <div id="diablo-welcome" class="diablo-welcome"><div class="diablo-welcome-logo">D</div><h1>أهلًا بيك في <span>DIABLO AI</span></h1><p>اكتب رسالتك، ارفع صورة، أو افتح الكاميرا وابدأ المحادثة.</p></div>
       <div id="diablo-chat-messages" class="diablo-chat-messages" aria-live="polite"></div>
       <div id="diablo-typing" class="diablo-typing" hidden><span></span><span></span><span></span> DIABLO AI بيفكر…</div>
     </div>
     <div class="diablo-composer-wrap"><div id="diablo-attachment-preview" class="diablo-attachment-preview"><div id="ai-image-preview" hidden></div></div>
-      <div class="diablo-composer-tools"><button type="button" onclick="document.getElementById('ai-image-input').click()">＋ <span>إضافة صورة</span></button><button type="button" onclick="openAICamera()">▣ <span>الكاميرا</span></button><input id="ai-image-input" type="file" accept="image/*" hidden onchange="handleAIImageSelection(this)"></div>
+      <div class="diablo-composer-tools"><button type="button" onclick="document.getElementById('ai-image-input').click()">＋ <span>إضافة صورة</span></button><button type="button" onclick="openAICamera()">▣ <span>الكاميرا</span></button><button type="button" id="diablo-live-voice-open" onclick="startDiabloLiveVoice()">🎙️ <span>تحدث مع DIABLO</span></button><input id="ai-image-input" type="file" accept="image/*" hidden onchange="handleAIImageSelection(this)"></div>
       <div class="diablo-composer"><textarea id="ai-question" rows="1" placeholder="اكتب رسالتك لـ DIABLO AI…" aria-label="رسالتك"></textarea><button id="diablo-send-btn" class="diablo-send-btn" onclick="askAI()" aria-label="إرسال الرسالة">➤</button></div>
-      <div class="diablo-composer-foot"><span>بعد اختيار صورة، اكتب سؤالك واضغط إرسال — أو أرسل الصورة وحدها لتحليلها.</span><button id="ai-image-remove" class="diablo-remove-image" onclick="removeAIImage()" hidden>إزالة الصورة ×</button></div>
+      <div class="diablo-composer-foot"><span>بعد اختيار صورة، اكتب سؤالك واضغط إرسال — أو أرسل الصورة وحدها لتحليلها.</span><span id="diablo-usage-status" aria-live="polite">سجّل الدخول لمتابعة حدود الاستخدام.</span><button id="ai-image-remove" class="diablo-remove-image" onclick="removeAIImage()" hidden>إزالة الصورة ×</button></div>
     </div>
   </section>
-</div>
-
-<!-- DIABLO ACCOUNT AUTH -->
-<div id="diablo-auth-modal" class="diablo-auth-overlay" hidden role="dialog" aria-modal="true" aria-labelledby="diablo-auth-title">
-  <div class="diablo-auth-card">
-    <button class="diablo-plus-close" onclick="closeDiabloAuth()" aria-label="إغلاق">✕</button>
-    <div class="diablo-plus-badge">👤 حسابك الشخصي</div>
-    <h2 id="diablo-auth-title">حساب <span>DIABLO</span></h2>
-    <p class="diablo-plus-lead">سجّل دخولك علشان تقدر تحفظ محادثاتك وتفتحها من أي جهاز.</p>
-    <div id="diablo-auth-user" class="diablo-auth-user" hidden></div>
-    <div id="diablo-auth-form">
-      <label for="diablo-auth-email">البريد الإلكتروني</label>
-      <input id="diablo-auth-email" type="email" autocomplete="email" placeholder="name@example.com">
-      <label for="diablo-auth-password">كلمة المرور</label>
-      <input id="diablo-auth-password" type="password" autocomplete="current-password" placeholder="٨ أحرف على الأقل">
-      <div class="diablo-auth-actions">
-        <button type="button" onclick="diabloEmailSignIn()">تسجيل الدخول</button>
-        <button type="button" class="secondary" onclick="diabloEmailSignUp()">إنشاء حساب</button>
-      </div>
-      <button type="button" class="diablo-google-btn" onclick="diabloGoogleSignIn()">G&nbsp; المتابعة باستخدام Google</button>
-      <button type="button" class="diablo-auth-link" onclick="diabloResetPassword()">نسيت كلمة المرور؟</button>
-    </div>
-    <div id="diablo-auth-status" class="diablo-auth-status" role="status" aria-live="polite">جهّز حسابك علشان تحفظ محادثاتك.</div>
-    <button id="diablo-signout-btn" class="diablo-signout-btn" type="button" onclick="diabloSignOut()" hidden>تسجيل الخروج</button>
-  </div>
 </div>
 
 <!-- DIABLO PLUS preview / payment instructions -->
@@ -1566,6 +1548,19 @@
 
 
 
+<!-- DIABLO realtime voice conversation -->
+<div id="diablo-live-voice-modal" class="diablo-voice-overlay" hidden role="dialog" aria-modal="true" aria-labelledby="diablo-live-voice-title">
+  <div class="diablo-voice-card">
+    <button type="button" class="diablo-voice-close" onclick="stopDiabloLiveVoice()" aria-label="إنهاء المكالمة">✕</button>
+    <div class="diablo-voice-orb">D</div>
+    <h2 id="diablo-live-voice-title">محادثة صوتية مباشرة</h2>
+    <p id="diablo-live-voice-status" role="status">اضغط بدء الاتصال واسمح باستخدام الميكروفون.</p>
+    <audio id="diablo-live-voice-audio" autoplay playsinline></audio>
+    <div class="diablo-voice-actions"><button type="button" id="diablo-live-voice-start" class="diablo-voice-start" onclick="connectDiabloLiveVoice()">بدء الاتصال المباشر 🎙️</button><button type="button" id="diablo-fallback-voice-btn" class="diablo-voice-start" onclick="toggleDiabloFallbackRecording()">تحدث واسمع الرد</button><button type="button" class="diablo-voice-end" onclick="stopDiabloLiveVoice()">إنهاء المحادثة</button></div>
+    <small>الاتصال المباشر يحتاج نموذج Realtime مفعّلًا. لو غير متاح، استخدم «تحدث واسمع الرد» للتسجيل ثم سماع الإجابة. يتم إرسال الصوت إلى خدمة الذكاء الاصطناعي لمعالجته.</small>
+  </div>
+</div>
+
 <!-- DIABLO live camera dialog -->
 <div id="ai-camera-modal" class="ai-camera-modal" role="dialog" aria-modal="true" aria-labelledby="ai-camera-title" hidden>
   <div class="ai-camera-card">
@@ -1586,7 +1581,6 @@
      QR CODE LIBRARY
 ========================================================= -->
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.0.4/tesseract.min.js"></script>
 
@@ -1595,6 +1589,9 @@
 ></script>
 
 
+
+<!-- Supabase JS v2 is required for DIABLO account sessions and Authorization tokens. -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <!-- =========================================================
      DIABLO MAIN JAVASCRIPT
