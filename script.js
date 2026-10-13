@@ -4327,3 +4327,241 @@ window.captureAICameraPhoto=function(){
   closeAICamera();document.getElementById('ai-question')?.focus();
  }catch(err){console.error('DIABLO camera capture error',err);if(status)status.textContent=err.message||'تعذر التقاط الصورة.'}
 };
+/* =========================================================
+   DIABLO AUTH + CLOUD CHAT SYNC
+   Supabase project URL is public; only use the anon/publishable key here.
+   Never put a service_role key or OAuth client secret in frontend code.
+========================================================= */
+const DIABLO_SUPABASE_URL = "https://sdtdcqtbqxbyovrtykei.supabase.co";
+const DIABLO_SUPABASE_PUBLIC_KEY = "sb_publishable_yJYWbGxZbH_aRG9bcTV-0g_Kc_mgkGt";
+let diabloSupabaseClient = null;
+let diabloAuthUser = null;
+let diabloAuthInitialized = false;
+let diabloCloudSyncTimer = null;
+let diabloAuthEventLock = false;
+
+function diabloAuthConfigured() {
+  return DIABLO_SUPABASE_PUBLIC_KEY && !DIABLO_SUPABASE_PUBLIC_KEY.includes("PASTE_SUPABASE_");
+}
+function diabloAuthStatus(message, kind = "") {
+  const el = document.getElementById("diablo-auth-status");
+  if (!el) return;
+  el.textContent = message;
+  el.classList.remove("error", "success");
+  if (kind) el.classList.add(kind);
+}
+function diabloLocalChatKey() {
+  return diabloAuthUser ? `diablo_ai_chats_v2_user_${diabloAuthUser.id}` : "diablo_ai_chats_v2";
+}
+function diabloChatForCloud(chat) {
+  return {
+    user_id: diabloAuthUser.id,
+    chat_key: String(chat.id),
+    title: String(chat.title || "محادثة جديدة").slice(0, 160),
+    messages: (Array.isArray(chat.messages) ? chat.messages : []).map(m => ({
+      role: m.role === "assistant" ? "assistant" : "user",
+      content: typeof m.content === "string" ? m.content : String(m.displayText || ""),
+      displayText: String(m.displayText || (typeof m.content === "string" ? m.content : "")),
+      imageAttached: Boolean(m.image || m.imageAttached),
+      updatedAt: Number(m.updatedAt || Date.now())
+    })),
+    updated_at: new Date(Number(chat.updatedAt || Date.now())).toISOString()
+  };
+}
+async function diabloSyncChatsToCloud() {
+  if (!diabloSupabaseClient || !diabloAuthUser || !diabloAuthConfigured()) return;
+  const rows = diabloChatStore.slice(0, 50).map(diabloChatForCloud);
+  if (!rows.length) return;
+  const { error } = await diabloSupabaseClient.from("diablo_chats").upsert(rows, { onConflict: "user_id,chat_key" });
+  if (error) {
+    console.warn("DIABLO cloud chat sync failed:", error.message);
+    if (document.getElementById("diablo-auth-modal")?.classList.contains("is-open")) {
+      diabloAuthStatus("الحساب شغال، لكن حفظ المحادثات السحابي لم يكتمل. تأكد إنك نفذت ملف supabase-schema.sql من SQL Editor. التفاصيل: " + error.message, "error");
+    }
+  }
+}
+async function diabloLoadCloudChats() {
+  if (!diabloSupabaseClient || !diabloAuthUser) return;
+  const { data, error } = await diabloSupabaseClient.from("diablo_chats")
+    .select("chat_key,title,messages,updated_at")
+    .eq("user_id", diabloAuthUser.id)
+    .order("updated_at", { ascending: false })
+    .limit(50);
+  if (error) {
+    console.warn("DIABLO cloud chat load failed:", error.message);
+    if (document.getElementById("diablo-auth-modal")?.classList.contains("is-open")) {
+      diabloAuthStatus("تسجيل الدخول ناجح، لكن جدول حفظ المحادثات لسه مش جاهز. هنكمل إعداده بعد ما تجهز المفتاح. " + error.message, "error");
+    }
+    return;
+  }
+  const localById = new Map(diabloChatStore.map(c => [String(c.id), c]));
+  for (const row of (data || [])) {
+    const id = String(row.chat_key);
+    const cloudMessages = (Array.isArray(row.messages) ? row.messages : []).map(m => ({
+      role: m.role === "assistant" ? "assistant" : "user",
+      content: String(m.content || ""),
+      displayText: String(m.displayText || m.content || "") + (m.imageAttached ? "\n[الصورة الأصلية محفوظة على الجهاز فقط]" : ""),
+      image: "",
+      imageAttached: Boolean(m.imageAttached),
+      updatedAt: Number(m.updatedAt || Date.parse(row.updated_at) || Date.now())
+    }));
+    const remote = { id, title: String(row.title || "محادثة جديدة"), messages: cloudMessages, updatedAt: Date.parse(row.updated_at) || Date.now() };
+    const local = localById.get(id);
+    if (!local || remote.updatedAt > Number(local.updatedAt || 0)) localById.set(id, remote);
+  }
+  diabloChatStore = Array.from(localById.values()).sort((a,b) => Number(b.updatedAt||0)-Number(a.updatedAt||0)).slice(0,50);
+  if (!diabloCurrentChatId || !diabloChatStore.some(c => c.id === diabloCurrentChatId)) {
+    diabloCurrentChatId = diabloChatStore[0]?.id || null;
+    aiMessages = [];
+  }
+  try { localStorage.setItem(diabloLocalChatKey(), JSON.stringify(diabloChatStore)); } catch {}
+  renderDiabloHistory();
+  renderDiabloChat();
+  // Upload local-only chats to the user's own account after merging.
+  if (diabloChatStore.length) await diabloSyncChatsToCloud();
+}
+window.diabloLoadChats = function() {
+  try {
+    const raw = localStorage.getItem(diabloLocalChatKey()) || (!diabloAuthUser ? localStorage.getItem("diablo_ai_chats_v2") : null) || "[]";
+    const parsed = JSON.parse(raw);
+    diabloChatStore = Array.isArray(parsed) ? parsed : [];
+  } catch { diabloChatStore = []; }
+  renderDiabloHistory();
+  if (diabloAuthUser) void diabloLoadCloudChats();
+};
+window.diabloSaveChats = function() {
+  try { localStorage.setItem(diabloLocalChatKey(), JSON.stringify(diabloChatStore.slice(0,50))); }
+  catch (e) { console.warn("Could not save DIABLO chats locally", e); }
+  renderDiabloHistory();
+  if (diabloAuthUser && diabloSupabaseClient) {
+    clearTimeout(diabloCloudSyncTimer);
+    diabloCloudSyncTimer = setTimeout(() => { void diabloSyncChatsToCloud(); }, 700);
+  }
+};
+window.clearDiabloHistory = async function() {
+  if (!confirm("تمسح كل المحادثات المحفوظة للحساب الحالي على هذا الجهاز والسحابة؟")) return;
+  diabloChatStore = [];
+  aiMessages = [];
+  diabloCurrentChatId = null;
+  try { localStorage.removeItem(diabloLocalChatKey()); } catch {}
+  try { if (!diabloAuthUser) localStorage.removeItem("diablo_ai_chats_v2"); } catch {}
+  if (diabloAuthUser && diabloSupabaseClient) {
+    const { error } = await diabloSupabaseClient.from("diablo_chats").delete().eq("user_id", diabloAuthUser.id);
+    if (error) console.warn("Could not clear cloud chats", error.message);
+  }
+  renderDiabloChat(); renderDiabloHistory();
+};
+function diabloUpdateAuthUI() {
+  const button = document.getElementById("diablo-auth-top-btn");
+  const form = document.getElementById("diablo-auth-form");
+  const userBox = document.getElementById("diablo-auth-user");
+  const signout = document.getElementById("diablo-signout-btn");
+  if (button) button.textContent = diabloAuthUser ? "👤 حسابي" : "👤 تسجيل الدخول";
+  if (form) form.hidden = Boolean(diabloAuthUser);
+  if (userBox) {
+    userBox.hidden = !diabloAuthUser;
+    userBox.textContent = diabloAuthUser ? `تم تسجيل الدخول باسم: ${diabloAuthUser.email || "حساب Google"}\nمحادثاتك مرتبطة بحسابك.` : "";
+  }
+  if (signout) signout.hidden = !diabloAuthUser;
+}
+window.openDiabloAuth = function() {
+  const modal = document.getElementById("diablo-auth-modal");
+  if (!modal) return;
+  modal.hidden = false; modal.classList.add("is-open"); document.body.classList.add("modal-open");
+  diabloUpdateAuthUI();
+  if (!diabloAuthConfigured()) {
+    diabloAuthStatus("باقي خطوة واحدة قبل التشغيل: حط Supabase anon/publishable key في script.js بدل PASTE_SUPABASE_ANON_OR_PUBLISHABLE_KEY_HERE.", "error");
+  } else if (diabloAuthUser) {
+    diabloAuthStatus("إنت مسجل دخول. محادثاتك هتتحفظ على حسابك بعد تجهيز جدول قاعدة البيانات.", "success");
+  } else {
+    diabloAuthStatus("استخدم البريد وكلمة المرور أو تابع باستخدام Google.");
+  }
+};
+window.closeDiabloAuth = function() {
+  const modal = document.getElementById("diablo-auth-modal");
+  if (modal) { modal.hidden = true; modal.classList.remove("is-open"); }
+  if (!document.getElementById("ai-modal")?.classList.contains("show") && !document.getElementById("summarizer-modal")?.classList.contains("show")) document.body.classList.remove("modal-open");
+};
+window.diabloEmailSignUp = async function() {
+  if (!diabloSupabaseClient) return diabloAuthStatus("إعداد المفتاح ناقص. أضف Supabase anon/publishable key الأول.", "error");
+  const email = document.getElementById("diablo-auth-email")?.value.trim();
+  const password = document.getElementById("diablo-auth-password")?.value || "";
+  if (!email || password.length < 8) return diabloAuthStatus("اكتب بريدًا صحيحًا وكلمة مرور من 8 أحرف على الأقل.", "error");
+  diabloAuthStatus("جاري إنشاء الحساب…");
+  const { data, error } = await diabloSupabaseClient.auth.signUp({ email, password, options: { emailRedirectTo: window.location.origin + window.location.pathname } });
+  if (error) return diabloAuthStatus(error.message, "error");
+  if (data.session) diabloAuthStatus("تم إنشاء الحساب وتسجيل الدخول بنجاح.", "success");
+  else diabloAuthStatus("تم إنشاء الحساب. افتح رسالة التأكيد اللي وصلت لبريدك، وبعدها ارجع سجّل دخولك.", "success");
+};
+window.diabloEmailSignIn = async function() {
+  if (!diabloSupabaseClient) return diabloAuthStatus("إعداد المفتاح ناقص. أضف Supabase anon/publishable key الأول.", "error");
+  const email = document.getElementById("diablo-auth-email")?.value.trim();
+  const password = document.getElementById("diablo-auth-password")?.value || "";
+  if (!email || !password) return diabloAuthStatus("اكتب البريد الإلكتروني وكلمة المرور.", "error");
+  diabloAuthStatus("جاري تسجيل الدخول…");
+  const { error } = await diabloSupabaseClient.auth.signInWithPassword({ email, password });
+  if (error) return diabloAuthStatus(error.message, "error");
+  diabloAuthStatus("تم تسجيل الدخول بنجاح.", "success");
+};
+window.diabloGoogleSignIn = async function() {
+  if (!diabloSupabaseClient) return diabloAuthStatus("إعداد المفتاح ناقص. أضف Supabase anon/publishable key الأول.", "error");
+  diabloAuthStatus("جاري فتح تسجيل الدخول بـ Google…");
+  const { error } = await diabloSupabaseClient.auth.signInWithOAuth({ provider: "google", options: { redirectTo: window.location.origin + window.location.pathname } });
+  if (error) diabloAuthStatus(error.message, "error");
+};
+window.diabloResetPassword = async function() {
+  if (!diabloSupabaseClient) return diabloAuthStatus("إعداد المفتاح ناقص. أضف Supabase anon/publishable key الأول.", "error");
+  const email = document.getElementById("diablo-auth-email")?.value.trim();
+  if (!email) return diabloAuthStatus("اكتب بريدك الإلكتروني الأول، وبعدها اضغط نسيت كلمة المرور.", "error");
+  const { error } = await diabloSupabaseClient.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin + window.location.pathname });
+  if (error) return diabloAuthStatus(error.message, "error");
+  diabloAuthStatus("لو البريد مسجل، هتوصلك رسالة لاستعادة كلمة المرور. راجع البريد الوارد والرسائل غير المرغوب فيها.", "success");
+};
+window.diabloSignOut = async function() {
+  if (!diabloSupabaseClient) return;
+  const { error } = await diabloSupabaseClient.auth.signOut();
+  if (error) return diabloAuthStatus(error.message, "error");
+  diabloAuthStatus("تم تسجيل الخروج.", "success");
+};
+async function diabloInitializeAuth() {
+  if (diabloAuthInitialized) return;
+  diabloAuthInitialized = true;
+  if (!diabloAuthConfigured()) {
+    diabloUpdateAuthUI();
+    return;
+  }
+  if (!window.supabase?.createClient) {
+    diabloAuthStatus("تعذر تحميل مكتبة تسجيل الدخول. تأكد من الاتصال بالإنترنت.", "error");
+    return;
+  }
+  try {
+    diabloSupabaseClient = window.supabase.createClient(DIABLO_SUPABASE_URL, DIABLO_SUPABASE_PUBLIC_KEY, {
+      auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
+    });
+    const { data } = await diabloSupabaseClient.auth.getSession();
+    diabloAuthUser = data?.session?.user || null;
+    diabloUpdateAuthUI();
+    diabloSupabaseClient.auth.onAuthStateChange((event, session) => {
+      if (diabloAuthEventLock) return;
+      diabloAuthEventLock = true;
+      const oldId = diabloAuthUser?.id || null;
+      diabloAuthUser = session?.user || null;
+      diabloUpdateAuthUI();
+      if (oldId !== (diabloAuthUser?.id || null)) {
+        diabloCurrentChatId = null; aiMessages = [];
+        window.diabloLoadChats();
+      }
+      if (event === "SIGNED_IN") diabloAuthStatus("تم تسجيل الدخول بنجاح.", "success");
+      if (event === "SIGNED_OUT") diabloAuthStatus("تم تسجيل الخروج. المحادثات المحلية للضيف منفصلة عن حسابك.", "success");
+      diabloAuthEventLock = false;
+    });
+    window.diabloLoadChats();
+    if (window.location.hash.includes("access_token") || window.location.search.includes("code=")) {
+      diabloAuthStatus("جاري تأكيد تسجيل الدخول…");
+    }
+  } catch (error) {
+    console.error("DIABLO Supabase initialization failed", error);
+    diabloAuthStatus("تعذر تهيئة تسجيل الدخول: " + (error.message || "خطأ غير معروف"), "error");
+  }
+}
+document.addEventListener("DOMContentLoaded", () => { void diabloInitializeAuth(); });

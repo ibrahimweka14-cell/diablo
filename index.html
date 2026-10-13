@@ -1309,7 +1309,7 @@
     </div>
   </aside>
   <section class="diablo-chat-main">
-    <header class="diablo-chat-topbar"><button class="diablo-icon-btn mobile-only" onclick="toggleDiabloSidebar()" aria-label="القائمة">☰</button><div><strong>DIABLO AI</strong><span class="diablo-online-dot"></span><small>مساعد تعليمي ذكي</small></div><button class="diablo-plus-top" onclick="openDiabloPlus()">✦ PLUS</button><button class="diablo-icon-btn" onclick="closeAI()" aria-label="إغلاق">✕</button></header>
+    <header class="diablo-chat-topbar"><button class="diablo-icon-btn mobile-only" onclick="toggleDiabloSidebar()" aria-label="القائمة">☰</button><div><strong>DIABLO AI</strong><span class="diablo-online-dot"></span><small>مساعد تعليمي ذكي</small></div><button class="diablo-auth-top" id="diablo-auth-top-btn" onclick="openDiabloAuth()">👤 تسجيل الدخول</button><button class="diablo-plus-top" onclick="openDiabloPlus()">✦ PLUS</button><button class="diablo-icon-btn" onclick="closeAI()" aria-label="إغلاق">✕</button></header>
     <div class="diablo-chat-scroll" id="diablo-chat-scroll">
       <div id="diablo-welcome" class="diablo-welcome"><div class="diablo-welcome-logo">D</div><h1>أهلًا بيك في <span>DIABLO AI</span></h1><p>اكتب رسالتك، ارفع صورة، أو افتح الكاميرا وابدأ المحادثة.</p></div>
       <div id="diablo-chat-messages" class="diablo-chat-messages" aria-live="polite"></div>
@@ -1321,6 +1321,31 @@
       <div class="diablo-composer-foot"><span>بعد اختيار صورة، اكتب سؤالك واضغط إرسال — أو أرسل الصورة وحدها لتحليلها.</span><button id="ai-image-remove" class="diablo-remove-image" onclick="removeAIImage()" hidden>إزالة الصورة ×</button></div>
     </div>
   </section>
+</div>
+
+<!-- DIABLO ACCOUNT AUTH -->
+<div id="diablo-auth-modal" class="diablo-auth-overlay" hidden role="dialog" aria-modal="true" aria-labelledby="diablo-auth-title">
+  <div class="diablo-auth-card">
+    <button class="diablo-plus-close" onclick="closeDiabloAuth()" aria-label="إغلاق">✕</button>
+    <div class="diablo-plus-badge">👤 حسابك الشخصي</div>
+    <h2 id="diablo-auth-title">حساب <span>DIABLO</span></h2>
+    <p class="diablo-plus-lead">سجّل دخولك علشان تقدر تحفظ محادثاتك وتفتحها من أي جهاز.</p>
+    <div id="diablo-auth-user" class="diablo-auth-user" hidden></div>
+    <div id="diablo-auth-form">
+      <label for="diablo-auth-email">البريد الإلكتروني</label>
+      <input id="diablo-auth-email" type="email" autocomplete="email" placeholder="name@example.com">
+      <label for="diablo-auth-password">كلمة المرور</label>
+      <input id="diablo-auth-password" type="password" autocomplete="current-password" placeholder="٨ أحرف على الأقل">
+      <div class="diablo-auth-actions">
+        <button type="button" onclick="diabloEmailSignIn()">تسجيل الدخول</button>
+        <button type="button" class="secondary" onclick="diabloEmailSignUp()">إنشاء حساب</button>
+      </div>
+      <button type="button" class="diablo-google-btn" onclick="diabloGoogleSignIn()">G&nbsp; المتابعة باستخدام Google</button>
+      <button type="button" class="diablo-auth-link" onclick="diabloResetPassword()">نسيت كلمة المرور؟</button>
+    </div>
+    <div id="diablo-auth-status" class="diablo-auth-status" role="status" aria-live="polite">جهّز حسابك علشان تحفظ محادثاتك.</div>
+    <button id="diablo-signout-btn" class="diablo-signout-btn" type="button" onclick="diabloSignOut()" hidden>تسجيل الخروج</button>
+  </div>
 </div>
 
 <!-- DIABLO PLUS preview / payment instructions -->
@@ -1561,6 +1586,7 @@
      QR CODE LIBRARY
 ========================================================= -->
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.0.4/tesseract.min.js"></script>
 
