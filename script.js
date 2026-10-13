@@ -4546,6 +4546,11 @@ async function diabloInitializeAuth() {
     diabloSupabaseClient = window.supabase.createClient(DIABLO_SUPABASE_URL, DIABLO_SUPABASE_PUBLIC_KEY, {
       auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
     });
+    console.log("DIABLO AUTH DEBUG", {
+  libraryLoaded: !!window.supabase?.createClient,
+  configured: diabloAuthConfigured(),
+  clientCreated: !!diabloSupabaseClient
+});
     const { data } = await diabloSupabaseClient.auth.getSession();
     diabloAuthUser = data?.session?.user || null;
     diabloUpdateAuthUI();
