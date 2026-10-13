@@ -1,6 +1,6 @@
 /* DIABLO AI backend for Cloudflare Workers.
  * Required secret: GROQ_API_KEY
- * Optional variables: GROQ_MODEL, GROQ_VISION_MODEL, GROQ_TRANSCRIPTION_MODEL, ALLOWED_ORIGIN
+ * Required secrets: GROQ_API_KEY, SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY. Optional: GROQ_MODEL, GROQ_VISION_MODEL, GROQ_TRANSCRIPTION_MODEL, ALLOWED_ORIGIN
  * Keep provider keys in Cloudflare Secrets only; never put them in frontend files or GitHub.
  */
 const DEFAULT_ORIGIN = "https://ibrahimweka14-cell.github.io";
@@ -14,7 +14,7 @@ function json(data, status = 200, headers = {}) {
 }
 function corsHeaders(origin, env) {
   const allowed = (env.ALLOWED_ORIGIN || DEFAULT_ORIGIN).split(",").map(x => x.trim()).filter(Boolean);
-  const headers = { "Vary": "Origin", "Access-Control-Allow-Methods": "POST, OPTIONS, GET", "Access-Control-Allow-Headers": "Content-Type", "Access-Control-Max-Age": "86400" };
+  const headers = { "Vary": "Origin", "Access-Control-Allow-Methods": "POST, OPTIONS, GET", "Access-Control-Allow-Headers": "Content-Type, Authorization, apikey, x-client-info", "Access-Control-Max-Age": "86400" };
   if (origin && allowed.includes(origin)) headers["Access-Control-Allow-Origin"] = origin;
   return headers;
 }
@@ -33,8 +33,6 @@ function normalizeForChat(content) {
       }
     } else if (part.type === "input_image" && typeof part.image_url === "string") {
       parts.push({ type: "image_url", image_url: { url: part.image_url } });
-    } else if (part.type === "input_image" && typeof part.image_url?.url === "string") {
-      parts.push({ type: "image_url", image_url: { url: part.image_url.url } });
     }
   }
   return parts.length ? parts : "";
@@ -45,14 +43,78 @@ function messageHasImage(content) {
     (typeof p.image_url === "string" || typeof p.image_url?.url === "string")
   );
 }
+async function verifyDiabloUser(request, env) {
+  const auth = request.headers.get("Authorization") || "";
+  const token = auth.match(/^Bearer\s+(.+)$/i)?.[1];
+  if (!token) return { error: json({ error: "سجّل الدخول إلى حساب DIABLO أولًا عشان نحتسب استخدامك اليومي." }, 401) };
+  if (!env.SUPABASE_URL || !env.SUPABASE_ANON_KEY || !env.SUPABASE_SERVICE_ROLE_KEY) {
+    return { error: json({ error: "إعداد حدود الاستخدام ناقص في Cloudflare. أضف إعدادات Supabase المطلوبة." }, 503) };
+  }
+  try {
+    const response = await fetch(`${env.SUPABASE_URL.replace(/\/$/, "")}/auth/v1/user`, {
+      headers: { "apikey": env.SUPABASE_ANON_KEY, "Authorization": `Bearer ${token}` }
+    });
+    const user = await response.json().catch(() => ({}));
+    if (!response.ok || !user?.id) return { error: json({ error: "انتهت جلسة تسجيل الدخول. سجّل الدخول مرة أخرى." }, 401) };
+    return { userId: user.id };
+  } catch {
+    return { error: json({ error: "تعذر التحقق من حساب DIABLO. حاول مرة أخرى." }, 502) };
+  }
+}
+async function callUsageRpc(env, userId, kind, hasImage = false) {
+  const base = env.SUPABASE_URL.replace(/\/$/, "");
+  const response = await fetch(`${base}/rest/v1/rpc/diablo_consume_usage`, {
+    method: "POST",
+    headers: {
+      "apikey": env.SUPABASE_SERVICE_ROLE_KEY,
+      "Authorization": `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ p_user_id: userId, p_kind: kind, p_has_image: Boolean(hasImage) })
+  });
+  const result = await response.json().catch(() => ({}));
+  if (!response.ok || !result || typeof result !== "object") {
+    console.error("DIABLO usage RPC failed", response.status);
+    return { error: "تعذر التحقق من حد الاستخدام. حاول بعد قليل." };
+  }
+  return { usage: result };
+}
+async function reserveUsage(request, env, kind, hasImage = false) {
+  const auth = await verifyDiabloUser(request, env);
+  if (auth.error) return { response: auth.error };
+  const result = await callUsageRpc(env, auth.userId, kind, hasImage);
+  if (result.error) return { response: json({ error: result.error }, 503) };
+  if (result.usage.allowed === false) {
+    const reason = result.usage.reason;
+    const error = reason === "image_limit"
+      ? "وصلت لحد الصور اليومي في باقتك. الترقية إلى PLUS ترفع الحد."
+      : reason === "transcription_limit"
+        ? "وصلت لحد تحويل التسجيلات الصوتية اليومي في باقتك."
+        : "خلصت ردود DIABLO AI المتاحة ليك النهارده. الحد هيتجدد بكرة، أو تقدر تشترك في PLUS.";
+    return { response: json({ error, usage: result.usage }, 429) };
+  }
+  return { userId: auth.userId, usage: result.usage };
+}
+async function getUsage(request, env) {
+  const auth = await verifyDiabloUser(request, env);
+  if (auth.error) return auth.error;
+  const result = await callUsageRpc(env, auth.userId, "status", false);
+  if (result.error) return json({ error: result.error }, 503);
+  return json(result.usage);
+}
+
 async function chat(request, env) {
   if (!env.GROQ_API_KEY) return json({ error: "خادم DIABLO غير مكتمل الإعداد: أضف GROQ_API_KEY كـ Secret في Cloudflare." }, 503);
   let body;
   try { body = await request.json(); } catch { return json({ error: "صيغة الطلب غير صحيحة." }, 400); }
   if (!Array.isArray(body.messages) || !body.messages.length) return json({ error: "اكتب رسالة أو أرفق صورة أولًا." }, 400);
   const incoming = body.messages.slice(-20);
+  const latestUserMessage = [...incoming].reverse().find(msg => msg && msg.role === "user");
+  const hasImage = messageHasImage(latestUserMessage?.content);
+  const reservation = await reserveUsage(request, env, "chat", hasImage);
+  if (reservation.response) return reservation.response;
+  const usage = reservation.usage;
   const messages = [{ role: "system", content: SYSTEM_PROMPT }];
-  let hasImage = false;
   for (const msg of incoming) {
     if (!msg || !["system", "developer", "user", "assistant"].includes(msg.role)) continue;
     if (msg.role === "system" || msg.role === "developer") {
@@ -62,7 +124,6 @@ async function chat(request, env) {
     }
     const content = normalizeForChat(msg.content);
     if (typeof content === "string" ? !content.trim() : !content.length) continue;
-    if (messageHasImage(msg.content)) hasImage = true;
     // Some providers accept only user/assistant/system roles.
     messages.push({ role: msg.role, content });
   }
@@ -86,17 +147,17 @@ async function chat(request, env) {
       let message = "حصلت مشكلة في خدمة الذكاء الاصطناعي.";
       if (upstream.status === 401 || upstream.status === 403) message = "مفتاح Groq غير صحيح أو لا يملك الصلاحية المطلوبة. راجع GROQ_API_KEY في Cloudflare.";
       else if (upstream.status === 429) message = "وصل DIABLO إلى حد استخدام Groq المتاح حاليًا. جرّب لاحقًا أو راجع حدود حسابك.";
-      else if (upstream.status === 400 || upstream.status === 404) message = (hasImage ? "تعذر تحليل الصورة: نموذج الرؤية غير متاح أو صيغة الصورة غير مدعومة. راجع GROQ_VISION_MODEL في Cloudflare." : "النموذج النصي غير متاح. راجع GROQ_MODEL في Cloudflare.") + (detail ? " التفاصيل: " + detail : "");
+      else if (upstream.status === 400 || upstream.status === 404) message = "النموذج غير متاح أو الطلب غير مدعوم في Groq. راجع GROQ_MODEL أو GROQ_VISION_MODEL." + (detail ? " التفاصيل: " + detail : "");
       else if (detail) message += " " + detail;
-      return json({ error: message }, upstream.status === 429 ? 429 : 502);
+      return json({ error: message, usage }, upstream.status === 429 ? 429 : 502);
     }
     const answer = String(data?.choices?.[0]?.message?.content || "").trim();
-    if (!answer) return json({ error: "وصل رد فارغ من النموذج. جرّب صياغة السؤال مرة أخرى." }, 502);
-    return json({ answer, model });
+    if (!answer) return json({ error: "وصل رد فارغ من النموذج. جرّب صياغة السؤال مرة أخرى.", usage }, 502);
+    return json({ answer, model, usage });
   } catch (err) {
-    if (err?.name === "AbortError") return json({ error: "الرد استغرق وقتًا طويلًا. جرّب سؤالًا أقصر." }, 504);
+    if (err?.name === "AbortError") return json({ error: "الرد استغرق وقتًا طويلًا. جرّب سؤالًا أقصر.", usage }, 504);
     console.error("DIABLO chat network error", err?.name || "unknown");
-    return json({ error: "تعذر الاتصال بخدمة الذكاء الاصطناعي. حاول مرة أخرى." }, 502);
+    return json({ error: "تعذر الاتصال بخدمة الذكاء الاصطناعي. حاول مرة أخرى.", usage }, 502);
   } finally { clearTimeout(timeout); }
 }
 function base64ToBytes(value) {
@@ -115,6 +176,9 @@ async function transcribe(request, env) {
   try { bytes = base64ToBytes(body.audioBase64); } catch { return json({ error: "ملف الصوت غير صالح." }, 400); }
   if (!bytes.length) return json({ error: "ملف الصوت فارغ." }, 400);
   if (bytes.length > 20 * 1024 * 1024) return json({ error: "التسجيل أكبر من الحد المسموح (20 ميجابايت). قصّر التسجيل وحاول مرة أخرى." }, 413);
+  const reservation = await reserveUsage(request, env, "transcription", false);
+  if (reservation.response) return reservation.response;
+  const usage = reservation.usage;
   const mime = String(body.mimeType || "audio/webm").split(";")[0];
   const ext = mime.includes("mp4") ? "m4a" : mime.includes("mpeg") ? "mp3" : mime.includes("wav") ? "wav" : mime.includes("ogg") ? "ogg" : "webm";
   const form = new FormData();
@@ -135,7 +199,7 @@ async function transcribe(request, env) {
     }
     const text = String(data.text || "").trim();
     if (!text) return json({ error: "لم يتم التعرف على كلام واضح في التسجيل." }, 422);
-    return json({ text });
+    return json({ text, usage });
   } catch (err) {
     return json({ error: err?.name === "AbortError" ? "استغرق تحويل التسجيل وقتًا طويلًا." : "تعذر الاتصال بخدمة تحويل الصوت لنص." }, 502);
   } finally { clearTimeout(timeout); }
@@ -148,15 +212,21 @@ export default {
     if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: cors });
     if (request.method === "GET" && url.pathname === "/health") {
       return json({
-        ok: true, service: "DIABLO AI", version: "2026-10-13-groq-migration",
+        ok: true, service: "DIABLO AI", version: "2026-10-13-groq-usage-plus",
         provider: "groq", chat: Boolean(env.GROQ_API_KEY), imageInput: Boolean(env.GROQ_API_KEY),
-        transcription: Boolean(env.GROQ_API_KEY), realtimeVoice: false,
+        transcription: Boolean(env.GROQ_API_KEY), usageLimits: Boolean(env.SUPABASE_URL && env.SUPABASE_ANON_KEY && env.SUPABASE_SERVICE_ROLE_KEY), realtimeVoice: false,
         chatModel: env.GROQ_MODEL || "llama-3.3-70b-versatile",
         visionModel: env.GROQ_VISION_MODEL || "meta-llama/llama-4-scout-17b-16e-instruct",
         transcriptionModel: env.GROQ_TRANSCRIPTION_MODEL || "whisper-large-v3-turbo"
       }, 200, cors);
     }
     if (origin && !cors["Access-Control-Allow-Origin"]) return json({ error: "هذا الموقع غير مسموح له باستخدام DIABLO AI." }, 403, cors);
+    if (request.method === "GET" && url.pathname === "/usage") {
+      const response = await getUsage(request, env);
+      const headers = new Headers(response.headers);
+      for (const [k, v] of Object.entries(cors)) headers.set(k, v);
+      return new Response(response.body, { status: response.status, headers });
+    }
     if (request.method !== "POST") return json({ error: "طريقة الطلب غير مدعومة." }, 405, cors);
     const length = Number(request.headers.get("Content-Length") || 0);
     if (length > 28 * 1024 * 1024) return json({ error: "حجم الطلب كبير جدًا." }, 413, cors);
